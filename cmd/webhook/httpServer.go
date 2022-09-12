@@ -1,0 +1,72 @@
+package main
+
+import (
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
+
+const InvalidMethod string = "Invalid http method."
+
+func httpAccessLog(req *http.Request) {
+	log.Printf("[TRACE] %s - %s - %s\n", req.Method, req.RemoteAddr, req.RequestURI)
+}
+
+func crossSiteOrigin(w http.ResponseWriter) {
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-API-Token")
+}
+
+func httpServer(host string, port int) {
+	path := http.NewServeMux()
+
+	connection := &http.Server{
+		Addr:         host + ":" + strconv.FormatInt(int64(port), 10),
+		Handler:      path,
+		ReadTimeout:  time.Duration(config.WebSrvReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(config.WebSrvWriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(config.WebSrvIdleTimeout) * time.Second,
+	}
+
+	// healthcheck
+	path.HandleFunc("/healthcheck", webHealthCheck)
+	// api-endpoint
+	path.HandleFunc("/api/v1/mutate", webMutatePod)
+	// web root
+	path.HandleFunc("/", webRoot)
+
+	if err := connection.ListenAndServe(); err != nil {
+		log.Fatalf("[ERROR] %s\n", err)
+	}
+}
+
+func webRoot(w http.ResponseWriter, r *http.Request) {
+	httpAccessLog(r)
+	crossSiteOrigin(w)
+
+	switch {
+	case strings.ToLower(r.Method) != "get":
+		log.Printf("[DEBUG] Request to '/' was made using the wrong method: expected %s, got %s", "GET", strings.ToUpper(r.Method))
+		tmpltError(w, http.StatusBadRequest, InvalidMethod)
+	case r.URL.Path != "/":
+		log.Printf("[DEBUG] Unable to locate requested path: '%s'", r.URL.Path)
+		tmpltError(w, http.StatusNotFound, "Requested path not found.")
+	default:
+		tmpltWebRoot(w)
+	}
+}
+
+func webHealthCheck(w http.ResponseWriter, r *http.Request) {
+	httpAccessLog(r)
+	crossSiteOrigin(w)
+
+	if strings.ToLower(r.Method) == "get" {
+		tmpltHealthCheck(w)
+	} else {
+		log.Printf("[DEBUG] Request to '/healthcheck' was made using the wrong method: expected %s, got %s", "GET", strings.ToUpper(r.Method))
+		tmpltError(w, http.StatusBadRequest, InvalidMethod)
+	}
+}
