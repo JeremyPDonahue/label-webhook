@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	"log"
 	"net/http"
@@ -70,3 +70,4 @@ func webHealthCheck(w http.ResponseWriter, r *http.Request) {
 		tmpltError(w, http.StatusBadRequest, InvalidMethod)
 	}
 }
+*/

@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"mutating-webhook/internal/initialize"
 )
 
 func forever() {
@@ -20,9 +22,9 @@ func main() {
 		log.Println("[DEBUG] shutdown sequence complete")
 	}()
 
-	initialize()
+	initialize.Init()
 
-	go httpServer(config.WebSrvIP, config.WebSrvPort)
+	//go httpServer(config.WebSrvIP, config.WebSrvPort)
 
 	forever()
 }

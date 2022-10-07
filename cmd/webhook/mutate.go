@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	"fmt"
 	"log"
@@ -186,3 +186,4 @@ func mutationRequired(metadata *meta.ObjectMeta) bool {
 	log.Printf("[TRACE] Mutation policy for %v/%v: required:%v", metadata.Namespace, metadata.Name, required)
 	return required
 }
+*/
