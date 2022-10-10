@@ -23,9 +23,9 @@ func main() {
 	}()
 
 	// initialize application configuration
-	initialize.Init()
+	cfg := initialize.Init()
 
-	//go httpServer(cfg.WebSrvIP, cfg.WebSrvPort)
+	go httpServer(cfg)
 
 	forever()
 }

@@ -1,7 +1,8 @@
 package main
-/*
+
 import (
 	"log"
+	"mutating-webhook/internal/config"
 	"net/http"
 	"strconv"
 	"strings"
@@ -20,15 +21,15 @@ func crossSiteOrigin(w http.ResponseWriter) {
 	w.Header().Add("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-API-Token")
 }
 
-func httpServer(host string, port int) {
+func httpServer(cfg *config.Config) {
 	path := http.NewServeMux()
 
 	connection := &http.Server{
-		Addr:         host + ":" + strconv.FormatInt(int64(port), 10),
+		Addr:         cfg.WebServerIP + ":" + strconv.FormatInt(int64(cfg.WebServerPort), 10),
 		Handler:      path,
-		ReadTimeout:  time.Duration(config.WebSrvReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(config.WebSrvWriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(config.WebSrvIdleTimeout) * time.Second,
+		ReadTimeout:  time.Duration(cfg.WebServerReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.WebServerWriteTimeout) * time.Second,
+		IdleTimeout:  time.Duration(cfg.WebServerIdleTimeout) * time.Second,
 	}
 
 	// healthcheck
@@ -70,4 +71,3 @@ func webHealthCheck(w http.ResponseWriter, r *http.Request) {
 		tmpltError(w, http.StatusBadRequest, InvalidMethod)
 	}
 }
-*/
