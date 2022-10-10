@@ -22,9 +22,10 @@ func main() {
 		log.Println("[DEBUG] shutdown sequence complete")
 	}()
 
+	// initialize application configuration
 	initialize.Init()
 
-	//go httpServer(config.WebSrvIP, config.WebSrvPort)
+	//go httpServer(cfg.WebSrvIP, cfg.WebSrvPort)
 
 	forever()
 }

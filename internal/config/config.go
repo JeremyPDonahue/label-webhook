@@ -2,6 +2,11 @@ package config
 
 import (
 	"fmt"
+	"log"
+	"mutating-webhook/internal/envconfig"
+	"os"
+	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/logutils"
@@ -10,8 +15,9 @@ import (
 type Config struct {
 	// time configuration
 	TimeFormat    string `env:"TIME_FORMAT" default:"2006-01-02 15:04:05"`
-	TimeZoneLocal *time.Location
-	TimeZoneUTC   *time.Location
+	TimeZoneLocal string `env:"TIME_ZONE" default:"America/Chicago"`
+	TZoneLocal    *time.Location
+	TZoneUTC      *time.Location
 
 	// logging
 	LogLevel int `env:"LOG_LEVEL" default:"50"`
@@ -25,10 +31,13 @@ type Config struct {
 	WebServerIdleTimeout  int    `env:"WEBSERVER_IDLE_TIMEOUT" default:"2"`
 }
 
-func NewConfig() (*Config, error) {
-	cfg := &Config{}
-
-	return cfg, nil
+func DefaultConfig() *Config {
+	return &Config{
+		Log: &logutils.LevelFilter{
+			Levels: []logutils.LogLevel{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"},
+			Writer: os.Stderr,
+		},
+	}
 }
 
 func (cfg *Config) Validate() error {
@@ -52,4 +61,37 @@ func (cfg *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func (cfg *Config) SetLogLevel() {
+	switch {
+	case cfg.LogLevel <= 20:
+		cfg.Log.SetMinLevel(logutils.LogLevel("ERROR"))
+	case cfg.LogLevel > 20 && cfg.LogLevel <= 40:
+		cfg.Log.SetMinLevel(logutils.LogLevel("WARNING"))
+	case cfg.LogLevel > 40 && cfg.LogLevel <= 60:
+		cfg.Log.SetMinLevel(logutils.LogLevel("INFO"))
+	case cfg.LogLevel > 60 && cfg.LogLevel <= 80:
+		cfg.Log.SetMinLevel(logutils.LogLevel("DEBUG"))
+	case cfg.LogLevel > 80:
+		cfg.Log.SetMinLevel(logutils.LogLevel("TRACE"))
+	}
+	log.SetOutput(cfg.Log)
+}
+
+func (cfg *Config) PrintRunningConfig(cfgInfo []envconfig.StructInfo) {
+	log.Printf("[DEBUG] Current Running Configuration Values:")
+	for _, info := range cfgInfo {
+		switch info.Type.String() {
+		case "string":
+			p := reflect.ValueOf(cfg).Elem().FieldByName(info.Name).Addr().Interface().(*string)
+			log.Printf("[DEBUG]\t%s\t\t= %s\n", info.Alt, *p)
+		case "bool":
+			p := reflect.ValueOf(cfg).Elem().FieldByName(info.Name).Addr().Interface().(*bool)
+			log.Printf("[DEBUG]\t%s\t\t= %s\n", info.Alt, strconv.FormatBool(*p))
+		case "int":
+			p := reflect.ValueOf(cfg).Elem().FieldByName(info.Name).Addr().Interface().(*int)
+			log.Printf("[DEBUG]\t%s\t\t= %s\n", info.Alt, strconv.FormatInt(int64(*p), 10))
+		}
+	}
 }
