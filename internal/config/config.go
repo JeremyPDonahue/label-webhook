@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"log"
-	"mutating-webhook/internal/envconfig"
 	"os"
 	"reflect"
 	"strconv"
@@ -31,6 +30,7 @@ type Config struct {
 	WebServerIdleTimeout  int    `env:"WEBSERVER_IDLE_TIMEOUT" default:"2"`
 }
 
+// DefaultConfig initializes the config variable for use with a prepared set of defaults.
 func DefaultConfig() *Config {
 	return &Config{
 		Log: &logutils.LevelFilter{
@@ -40,7 +40,7 @@ func DefaultConfig() *Config {
 	}
 }
 
-func (cfg *Config) Validate() error {
+func (cfg *Config) validate() error {
 	checks := []struct {
 		bad    bool
 		errMsg string
@@ -63,7 +63,7 @@ func (cfg *Config) Validate() error {
 	return nil
 }
 
-func (cfg *Config) SetLogLevel() {
+func (cfg *Config) setLogLevel() {
 	switch {
 	case cfg.LogLevel <= 20:
 		cfg.Log.SetMinLevel(logutils.LogLevel("ERROR"))
@@ -79,7 +79,7 @@ func (cfg *Config) SetLogLevel() {
 	log.SetOutput(cfg.Log)
 }
 
-func (cfg *Config) PrintRunningConfig(cfgInfo []envconfig.StructInfo) {
+func (cfg *Config) printRunningConfig(cfgInfo []StructInfo) {
 	log.Printf("[DEBUG] Current Running Configuration Values:")
 	for _, info := range cfgInfo {
 		switch info.Type.String() {

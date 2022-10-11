@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"mutating-webhook/internal/initialize"
+	"mutating-webhook/internal/config"
 )
 
 func forever() {
@@ -23,7 +23,7 @@ func main() {
 	}()
 
 	// initialize application configuration
-	cfg := initialize.Init()
+	cfg := config.Init()
 
 	go httpServer(cfg)
 

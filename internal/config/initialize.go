@@ -1,4 +1,4 @@
-package initialize
+package config
 
 import (
 	"flag"
@@ -7,9 +7,6 @@ import (
 	"reflect"
 	"strconv"
 	"time"
-
-	"mutating-webhook/internal/config"
-	"mutating-webhook/internal/envconfig"
 )
 
 // getEnvString returns string from environment variable
@@ -59,10 +56,13 @@ func getEnvBool(env string, def bool) bool {
 	return retVal
 }
 
-func Init() *config.Config {
-	cfg := config.DefaultConfig()
+// Init initializes the application configuration by reading default values from the struct's tags
+// and environment variables. Tags processed by this process are as follows:
+// `ignored:"true" env:"ENVIRONMENT_VARIABLE" default:"default value"`
+func Init() *Config {
+	cfg := DefaultConfig()
 
-	cfgInfo, err := envconfig.GetStructInfo(cfg)
+	cfgInfo, err := getStructInfo(cfg)
 	if err != nil {
 		log.Fatalf("[FATAL] %v", err)
 	}
@@ -98,10 +98,11 @@ func Init() *config.Config {
 	flag.Parse()
 
 	// set logging level
-	cfg.SetLogLevel()
+	cfg.setLogLevel()
 
-	// 
-	if err = cfg.Validate(); err != nil {
+	// validate some required values are defined.
+	// need to break this out to a required:"true" struct tag
+	if err = cfg.validate(); err != nil {
 		log.Fatalf("[FATAL] %v", err)
 	}
 
@@ -117,7 +118,7 @@ func Init() *config.Config {
 	time.Now().Format(cfg.TimeFormat)
 
 	// print running config
-	cfg.PrintRunningConfig(cfgInfo)
+	cfg.printRunningConfig(cfgInfo)
 
 	log.Println("[INFO] initialization complete")
 	return cfg

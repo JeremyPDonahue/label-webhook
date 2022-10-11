@@ -1,4 +1,4 @@
-package envconfig
+package config
 
 import (
 	"fmt"
@@ -6,12 +6,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-/*
-ignored:"true"
-env:"ENVIRONMENT_VARIABLE"
-default:"default value"
-*/
 
 type StructInfo struct {
 	Name         string
@@ -23,7 +17,7 @@ type StructInfo struct {
 	DefaultValue interface{}
 }
 
-func GetStructInfo(spec interface{}) ([]StructInfo, error) {
+func getStructInfo(spec interface{}) ([]StructInfo, error) {
 	s := reflect.ValueOf(spec)
 
 	if s.Kind() != reflect.Pointer {
