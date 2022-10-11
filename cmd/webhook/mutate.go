@@ -1,21 +1,15 @@
 package main
-/*
+
 import (
-	"fmt"
-	"log"
-	"strings"
-
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
-
-	admission "k8s.io/api/admission/v1"
-	core "k8s.io/api/core/v1"
-	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
+func webMutatePod(w http.ResponseWriter, r *http.Request) {
+	//https://github.com/douglasmakey/admissioncontroller
+
+}
+
+/*
 var (
 	codecs = serializer.NewCodecFactory(runtime.NewScheme())
 )
@@ -123,6 +117,7 @@ func mutationResp(w http.ResponseWriter, aRRequest *admission.AdmissionReview, a
 	w.Write(resp)
 }
 
+/*
 // create mutation patch for resources
 func createPatch(pod *core.Pod, containers []core.Container) ([]byte, error) {
 	var (
@@ -154,7 +149,7 @@ func createPatch(pod *core.Pod, containers []core.Container) ([]byte, error) {
 	return json.Marshal(patch)
 }
 
-// Check whether the target resourse needs to be mutated
+// Check whether the target resource needs to be mutated
 func mutationRequired(metadata *meta.ObjectMeta) bool {
 	var ignoredNamespaces = []string{
 		meta.NamespaceSystem,
@@ -164,7 +159,7 @@ func mutationRequired(metadata *meta.ObjectMeta) bool {
 	// skip special kubernetes system namespaces
 	for _, namespace := range ignoredNamespaces {
 		if metadata.Namespace == namespace {
-			log.Printf("[TRACE] Skip mutation for %v for it's in special namespace:%v", metadata.Name, metadata.Namespace)
+			log.Printf("[TRACE] Protected namespace detected (%s) skipping mutation: %s", metadata.Namespace, metadata.Name)
 			return false
 		}
 	}
@@ -183,7 +178,7 @@ func mutationRequired(metadata *meta.ObjectMeta) bool {
 		required = false
 	}
 
-	log.Printf("[TRACE] Mutation policy for %v/%v: required:%v", metadata.Namespace, metadata.Name, required)
+	log.Printf("[TRACE] Mutation policy for %s/%s: required:%b", metadata.Namespace, metadata.Name, required)
 	return required
 }
 */
