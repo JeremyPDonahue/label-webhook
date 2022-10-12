@@ -1,184 +1,126 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"strings"
+
+	admission "k8s.io/api/admission/v1"
+	core "k8s.io/api/core/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
+
+type result struct {
+	Allowed  bool
+	Msg      string
+	PatchOps []patchOperation
+}
+
+type admitFunc func(request *admission.AdmissionRequest) (*result, error)
+
+type hook struct {
+	Create  admitFunc
+	Delete  admitFunc
+	Update  admitFunc
+	Connect admitFunc
+}
 
 func webMutatePod(w http.ResponseWriter, r *http.Request) {
 	//https://github.com/douglasmakey/admissioncontroller
 
-}
-
-/*
-var (
-	codecs = serializer.NewCodecFactory(runtime.NewScheme())
-)
-
-func admissionReviewFromRequest(r *http.Request, deserializer runtime.Decoder) (*admission.AdmissionReview, error) {
-	// Validate that the incoming content type is correct.
-	if r.Header.Get("Content-Type") != "application/json" {
-		return nil, fmt.Errorf("expected application/json content-type")
+	podsValidation := hook{
+		Create: validateCreate(),
 	}
 
-	// Get the body data, which will be the AdmissionReview
-	// content for the request.
-	var body []byte
-	if r.Body != nil {
-		requestData, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return nil, err
+	admissionHandler := &struct {
+		decoder runtime.Decoder
+	}{
+		decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
+	}
+
+	// read request body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		tmpltError(w, http.StatusBadRequest, "No data in request body.")
+		return
+	}
+
+	// see if request body can be decoded
+	var review admission.AdmissionReview
+	if _, _, err := admissionHandler.decoder.Decode(body, nil, &review); err != nil {
+		tmpltError(w, http.StatusBadRequest, "Unable to decode request body.")
+		return
+	}
+
+	var o *result
+	switch review.Request.Operation {
+	case admission.Create:
+		if podsValidation.Create == nil {
+			tmpltError(w, http.StatusBadRequest, fmt.Sprintf("operation %s is not registered", review.Request.Operation))
+			return
 		}
-		body = requestData
+		o, _ = podsValidation.Create(review.Request)
+	case admission.Update:
+		if podsValidation.Update == nil {
+			tmpltError(w, http.StatusBadRequest, fmt.Sprintf("operation %s is not registered", review.Request.Operation))
+			return
+		}
+		o, _ = podsValidation.Update(review.Request)
+	case admission.Delete:
+		if podsValidation.Delete == nil {
+			tmpltError(w, http.StatusBadRequest, fmt.Sprintf("operation %s is not registered", review.Request.Operation))
+			return
+		}
+		o, _ = podsValidation.Delete(review.Request)
+	case admission.Connect:
+		if podsValidation.Connect == nil {
+			tmpltError(w, http.StatusBadRequest, fmt.Sprintf("operation %s is not registered", review.Request.Operation))
+			return
+		}
+		o, _ = podsValidation.Connect(review.Request)
 	}
 
-	// Decode the request body into
-	admissionReviewRequest := &admission.AdmissionReview{}
-	if _, _, err := deserializer.Decode(body, nil, admissionReviewRequest); err != nil {
-		return nil, err
+	admissionResult := admission.AdmissionReview{
+		Response: &admission.AdmissionResponse{
+			UID:     review.Request.UID,
+			Allowed: o.Allowed,
+			Result: &meta.Status{
+				Message: o.Msg,
+			},
+		},
 	}
 
-	return admissionReviewRequest, nil
-}
-
-func webMutatePod(w http.ResponseWriter, r *http.Request) {
-	httpAccessLog(r)
-
-	deserializer := codecs.UniversalDeserializer()
-
-	// Parse the AdmissionReview from the http request.
-	admissionReviewRequest, err := admissionReviewFromRequest(r, deserializer)
-	if err != nil {
-		msg := fmt.Sprintf("error getting admission review from request: %v", err)
-		log.Printf("[ERROR] %v", msg)
-		tmpltError(w, http.StatusBadRequest, msg)
-		return
-	}
-
-	// Do server-side validation that we are only dealing with a pod resource. This
-	// should also be part of the MutatingWebhookConfiguration in the cluster, but
-	// we should verify here before continuing.
-	podResource := meta.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-	if admissionReviewRequest.Request.Resource != podResource {
-		msg := fmt.Sprintf("did not receive pod, got %s", admissionReviewRequest.Request.Resource.Resource)
-		log.Printf("[ERROR] %v", msg)
-		tmpltError(w, http.StatusBadRequest, msg)
-		return
-	}
-
-	// Decode the pod from the AdmissionReview.
-	rawRequest := admissionReviewRequest.Request.Object.Raw
-	pod := core.Pod{}
-	if _, _, err := deserializer.Decode(rawRequest, nil, &pod); err != nil {
-		msg := fmt.Sprintf("error decoding raw pod: %v", err)
-		log.Printf("[ERROR] %v", msg)
-		tmpltError(w, http.StatusBadRequest, msg)
-		return
-	}
-
-	// check to see if mutation is required by looking for a label
-	if !mutationRequired(&pod.ObjectMeta) {
-		mutationResp(w, admissionReviewRequest, &admission.AdmissionResponse{Allowed: true})
-	}
-
-	// Add sidecar
-	sidecarContainer := []core.Container{{
-		Image: "ca-cert-server:latest",
-	}}
-
-	patchBytes, _ := createPatch(&pod, sidecarContainer)
-
-	// respond with patch
-	mutationResp(w, admissionReviewRequest, &admission.AdmissionResponse{
-		Allowed: true,
-		Patch:   patchBytes,
-		PatchType: func() *admission.PatchType {
-			pt := admission.PatchTypeJSONPatch
-			return &pt
-		}(),
-	})
-}
-
-// prepare response
-func mutationResp(w http.ResponseWriter, aRRequest *admission.AdmissionReview, aResponse *admission.AdmissionResponse) {
-	var aRResponse admission.AdmissionReview
-	aRResponse.Response = aResponse
-	aRResponse.SetGroupVersionKind(aRRequest.GroupVersionKind())
-	aRResponse.Response.UID = aRRequest.Request.UID
-
-	resp, err := json.Marshal(aRResponse)
-	if err != nil {
-		msg := fmt.Sprintf("error marshalling response json: %v", err)
-		log.Printf("[ERROR] %v", msg)
-		tmpltError(w, http.StatusBadRequest, msg)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
+	resp, _ := json.Marshal(admissionResult)
+	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
 }
 
-/*
-// create mutation patch for resources
-func createPatch(pod *core.Pod, containers []core.Container) ([]byte, error) {
-	var (
-		patch []patchOperation
-		first bool
-		value interface{}
-	)
-
-	if len(pod.Spec.Containers) == 0 {
-		first = true
-	}
-
-	for _, add := range containers {
-		value = add
-		path := "/spec/containers"
-		if first {
-			first = false
-			value = []core.Container{add}
-		} else {
-			path = path + "/-"
+func validateCreate() admitFunc {
+	return func(r *admission.AdmissionRequest) (*result, error) {
+		pod, err := parsePod(r.Object.Raw)
+		if err != nil {
+			return &result{Msg: err.Error()}, nil
 		}
-		patch = append(patch, patchOperation{
-			Op:    "add",
-			Path:  path,
-			Value: value,
-		})
-	}
 
-	return json.Marshal(patch)
+		for _, c := range pod.Spec.Containers {
+			if strings.HasSuffix(c.Image, ":latest") {
+				return &result{Msg: "You cannot use the tag 'latest' in a container."}, nil
+			}
+		}
+
+		return &result{Allowed: true}, nil
+	}
 }
 
-// Check whether the target resource needs to be mutated
-func mutationRequired(metadata *meta.ObjectMeta) bool {
-	var ignoredNamespaces = []string{
-		meta.NamespaceSystem,
-		meta.NamespacePublic,
+func parsePod(object []byte) (*core.Pod, error) {
+	var pod core.Pod
+	if err := json.Unmarshal(object, &pod); err != nil {
+		return nil, err
 	}
 
-	// skip special kubernetes system namespaces
-	for _, namespace := range ignoredNamespaces {
-		if metadata.Namespace == namespace {
-			log.Printf("[TRACE] Protected namespace detected (%s) skipping mutation: %s", metadata.Namespace, metadata.Name)
-			return false
-		}
-	}
-
-	annotations := metadata.GetLabels()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-
-	// determine whether to perform mutation based on annotation for the target resource
-	var required bool
-	switch strings.ToLower(annotations["sidecar-injector-webhook/inject"]) {
-	case "yes", "y", "true", "t", "on":
-		required = true
-	default:
-		required = false
-	}
-
-	log.Printf("[TRACE] Mutation policy for %s/%s: required:%b", metadata.Namespace, metadata.Name, required)
-	return required
+	return &pod, nil
 }
-*/
