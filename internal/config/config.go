@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"reflect"
@@ -13,21 +12,21 @@ import (
 
 type Config struct {
 	// time configuration
-	TimeFormat    string `env:"TIME_FORMAT" default:"2006-01-02 15:04:05"`
-	TimeZoneLocal string `env:"TIME_ZONE" default:"America/Chicago"`
-	TZoneLocal    *time.Location
-	TZoneUTC      *time.Location
+	TimeFormat    string         `env:"time_format" default:"2006-01-02 15:04:05"`
+	TimeZoneLocal string         `env:"time_zone" default:"America/Chicago"`
+	TZoneLocal    *time.Location `ignored:"true"`
+	TZoneUTC      *time.Location `ignored:"true"`
 
 	// logging
 	LogLevel int `env:"LOG_LEVEL" default:"50"`
 	Log      *logutils.LevelFilter
 
 	// webserver
-	WebServerPort         int    `env:"WEBSERVER_PORT" default:"8080"`
-	WebServerIP           string `env:"WEBSERVER_IP" default:"0.0.0.0"`
-	WebServerReadTimeout  int    `env:"WEBSERVER_READ_TIMEOUT" default:"5"`
-	WebServerWriteTimeout int    `env:"WEBSERVER_WRITE_TIMEOUT" default:"1"`
-	WebServerIdleTimeout  int    `env:"WEBSERVER_IDLE_TIMEOUT" default:"2"`
+	WebServerPort         int    `env:"webserver_port" default:"8080"`
+	WebServerIP           string `env:"webserver_ip" default:"0.0.0.0"`
+	WebServerReadTimeout  int    `env:"webserver_read_timeout" default:"5"`
+	WebServerWriteTimeout int    `env:"webserver_write_timeout" default:"1"`
+	WebServerIdleTimeout  int    `env:"webserver_idle_timeout" default:"2"`
 }
 
 // DefaultConfig initializes the config variable for use with a prepared set of defaults.
@@ -40,6 +39,7 @@ func DefaultConfig() *Config {
 	}
 }
 
+/*
 func (cfg *Config) validate() error {
 	checks := []struct {
 		bad    bool
@@ -62,6 +62,7 @@ func (cfg *Config) validate() error {
 
 	return nil
 }
+*/
 
 func (cfg *Config) setLogLevel() {
 	switch {

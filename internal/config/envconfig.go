@@ -63,11 +63,13 @@ func getStructInfo(spec interface{}) ([]StructInfo, error) {
 		}
 		info.Key = strings.ToUpper(info.Key)
 		if ftype.Tag.Get("default") != "" {
-			v, err := typeConversion(ftype.Type.String(), ftype.Tag.Get("default"))
+			v, err := typeConversion(ftype.Type.String(), getOSEnv(ftype.Tag.Get("env"), ftype.Tag.Get("default")))
 			if err != nil {
 				return []StructInfo{}, err
 			}
 			info.DefaultValue = v
+		} else {
+			info.DefaultValue = getOSEnv(ftype.Tag.Get("env"), "")
 		}
 		infos = append(infos, info)
 	}
