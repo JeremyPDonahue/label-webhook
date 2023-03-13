@@ -18,12 +18,14 @@ type Config struct {
 	TZoneUTC      *time.Location `ignored:"true"`
 
 	// logging
-	LogLevel int `env:"LOG_LEVEL" default:"50"`
-	Log      *logutils.LevelFilter
+	LogLevel int                   `env:"LOG_LEVEL" default:"50"`
+	Log      *logutils.LevelFilter `ignored:"true"`
 
 	// webserver
-	WebServerPort         int    `env:"webserver_port" default:"8080"`
+	WebServerPort         int    `env:"webserver_port" default:"8443"`
 	WebServerIP           string `env:"webserver_ip" default:"0.0.0.0"`
+	WebServerCertificate  string `env:"webserver_cert"`
+	WebServerKey          string `env:"webserver_key"`
 	WebServerReadTimeout  int    `env:"webserver_read_timeout" default:"5"`
 	WebServerWriteTimeout int    `env:"webserver_write_timeout" default:"1"`
 	WebServerIdleTimeout  int    `env:"webserver_idle_timeout" default:"2"`
@@ -38,31 +40,6 @@ func DefaultConfig() *Config {
 		},
 	}
 }
-
-/*
-func (cfg *Config) validate() error {
-	checks := []struct {
-		bad    bool
-		errMsg string
-	}{
-		{cfg.TimeFormat == "", "no TimeFormat specified"},
-		{cfg.LogLevel == 0, "no LogLevel specified"},
-		{cfg.WebServerPort == 0, "no WebServer.Port specified"},
-		{cfg.WebServerIP == "", "no WebServer.IP specified"},
-		{cfg.WebServerReadTimeout == 0, "no WebServer.ReadTimeout specified"},
-		{cfg.WebServerWriteTimeout == 0, "no WebServer.WriteTimeout specified"},
-		{cfg.WebServerIdleTimeout == 0, "no WebServer.IdleTimeout specified"},
-	}
-
-	for _, check := range checks {
-		if check.bad {
-			return fmt.Errorf("invalid config: %s", check.errMsg)
-		}
-	}
-
-	return nil
-}
-*/
 
 func (cfg *Config) setLogLevel() {
 	switch {

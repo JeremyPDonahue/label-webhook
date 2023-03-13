@@ -73,6 +73,6 @@ func Init() *Config {
 	// print running config
 	cfg.printRunningConfig(cfgInfo)
 
-	log.Println("[INFO] initialization complete")
+	log.Println("[INFO] initialization sequence complete")
 	return cfg
 }
