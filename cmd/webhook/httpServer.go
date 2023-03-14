@@ -33,6 +33,7 @@ func httpServer(cfg *config.Config) {
 		log.Printf("[INFO] No webserver certificate configured, automatically generating self signed certificate.")
 		serverCertificate = certificate.CreateServerCert()
 	} else {
+		log.Fatal("[FATAL] Code to support external webserver certificate is not complete yet. ./cmd/webhook/httpServer.go:36")
 		// read certificate from files
 		// check for errors
 	}
