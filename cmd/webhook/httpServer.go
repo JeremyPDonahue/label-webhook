@@ -206,7 +206,7 @@ func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("[INFO] Webhook [%s - %s] - Allowed: %t", r.URL.Path, review.Request.Operation, result.Allowed)
+		log.Printf("[INFO] Webhook [%s] - Allowed: %t", review.Request.Operation, result.Allowed)
 		w.WriteHeader(http.StatusOK)
 		w.Write(res)
 	}

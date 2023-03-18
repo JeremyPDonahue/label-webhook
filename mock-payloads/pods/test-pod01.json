@@ -99,7 +99,7 @@
 				}],
 				"containers": [{
 					"name": "toolbox",
-					"image": "jmsearcy/toolbox:latest",
+					"image": "jmsearcy/toolbox:v1.0.0",
 					"ports": [{
 						"containerPort": 8080,
 						"protocol": "TCP"

@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"log"
 	"strings"
 
 	admission "k8s.io/api/admission/v1"
@@ -21,7 +22,9 @@ func podValidationCreate() AdmitFunc {
 
 		for _, c := range pod.Spec.Containers {
 			if strings.HasSuffix(c.Image, ":latest") {
-				return &Result{Msg: "You cannot use the tag 'latest' in a container."}, nil
+				msg := "You cannot use the tag 'latest' in a container."
+				log.Printf("[TRACE] Request Rejectd: %s", msg)
+				return &Result{Msg: msg}, nil
 			}
 		}
 
