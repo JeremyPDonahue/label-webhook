@@ -2,14 +2,15 @@ package certificate
 
 import (
 	"bytes"
+	"strconv"
+	"time"
+
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
-	"strconv"
-	"time"
 )
 
 func CreateCert() ([]byte, []byte, []byte, error) {

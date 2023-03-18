@@ -29,6 +29,9 @@ type Config struct {
 	WebServerReadTimeout  int    `env:"webserver_read_timeout" default:"5"`
 	WebServerWriteTimeout int    `env:"webserver_write_timeout" default:"1"`
 	WebServerIdleTimeout  int    `env:"webserver_idle_timeout" default:"2"`
+
+	// mutation configuration
+	AllowAdminNoMutate	bool `env:"allow_admin_nomutate" default:"false"`
 }
 
 // DefaultConfig initializes the config variable for use with a prepared set of defaults.

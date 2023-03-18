@@ -5,6 +5,8 @@ package operations
 import (
 	"fmt"
 
+	"mutating-webhook/internal/config"
+
 	admission "k8s.io/api/admission/v1"
 )
 
@@ -16,7 +18,7 @@ type Result struct {
 }
 
 // AdmitFunc defines how to process an admission request
-type AdmitFunc func(request *admission.AdmissionRequest) (*Result, error)
+type AdmitFunc func(request *admission.AdmissionRequest, cfg config.Config) (*Result, error)
 
 // Hook represents the set of functions for each operation in an admission webhook.
 type Hook struct {
@@ -27,25 +29,25 @@ type Hook struct {
 }
 
 // Execute evaluates the request and try to execute the function for operation specified in the request.
-func (h *Hook) Execute(r *admission.AdmissionRequest) (*Result, error) {
+func (h *Hook) Execute(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
 	switch r.Operation {
 	case admission.Create:
-		return wrapperExecution(h.Create, r)
+		return wrapperExecution(h.Create, r, *cfg)
 	case admission.Update:
-		return wrapperExecution(h.Update, r)
+		return wrapperExecution(h.Update, r, *cfg)
 	case admission.Delete:
-		return wrapperExecution(h.Delete, r)
+		return wrapperExecution(h.Delete, r, *cfg)
 	case admission.Connect:
-		return wrapperExecution(h.Connect, r)
+		return wrapperExecution(h.Connect, r, *cfg)
 	}
 
 	return &Result{Msg: fmt.Sprintf("Invalid operation: %s", r.Operation)}, nil
 }
 
-func wrapperExecution(fn AdmitFunc, r *admission.AdmissionRequest) (*Result, error) {
+func wrapperExecution(fn AdmitFunc, r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
 	if fn == nil {
 		return nil, fmt.Errorf("operation %s is not registered", r.Operation)
 	}
 
-	return fn(r)
+	return fn(r, cfg)
 }

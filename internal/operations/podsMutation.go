@@ -3,6 +3,8 @@ package operations
 import (
 	"fmt"
 
+	"mutating-webhook/internal/config"
+
 	admission "k8s.io/api/admission/v1"
 	core "k8s.io/api/core/v1"
 )
@@ -11,20 +13,20 @@ func PodsMutation() Hook {
 	return Hook{
 		Create: podMutationCreate(),
 		// default allow
-		Delete: func(r *admission.AdmissionRequest) (*Result, error) {
+		Delete: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
-		Update: func(r *admission.AdmissionRequest) (*Result, error) {
+		Update: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
-		Connect: func(r *admission.AdmissionRequest) (*Result, error) {
+		Connect: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
 	}
 }
 
 func podMutationCreate() AdmitFunc {
-	return func(r *admission.AdmissionRequest) (*Result, error) {
+	return func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
 		var operations []PatchOperation
 		pod, err := parsePod(r.Object.Raw)
 		if err != nil {
@@ -32,7 +34,7 @@ func podMutationCreate() AdmitFunc {
 		}
 
 		// if pod is administratively exempt
-		if func(pod *core.Pod) bool {
+		if cfg.AllowAdminNoMutate && func(pod *core.Pod) bool {
 			for label, value := range pod.Annotations {
 				if label == "AdminNoMutate" && value == "true" {
 					return false

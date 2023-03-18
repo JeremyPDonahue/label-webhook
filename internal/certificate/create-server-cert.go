@@ -2,11 +2,12 @@ package certificate
 
 import (
 	"bytes"
+	"log"
+
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"log"
 )
 
 func CreateServerCert() tls.Certificate {

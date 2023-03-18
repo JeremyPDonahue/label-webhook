@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"crypto/tls"
+	"encoding/json"
 	"net/http"
 
 	"mutating-webhook/internal/certificate"
@@ -74,6 +74,7 @@ func httpServer(cfg *config.Config) {
 
 	ah := &admissionHandler{
 		decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
+		config:  cfg,
 	}
 
 	// healthcheck
@@ -124,6 +125,7 @@ func webHealthCheck(w http.ResponseWriter, r *http.Request) {
 
 type admissionHandler struct {
 	decoder runtime.Decoder
+	config  *config.Config
 }
 
 // Serve returns a http.HandlerFunc for an admission webhook
@@ -171,7 +173,7 @@ func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
 			return
 		}
 
-		result, err := hook.Execute(review.Request)
+		result, err := hook.Execute(review.Request, h.config)
 		if err != nil {
 			msg := err.Error()
 			log.Printf("[ERROR] Internal Server Error: %s", msg)
