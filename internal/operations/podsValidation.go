@@ -10,6 +10,16 @@ import (
 func PodsValidation() Hook {
 	return Hook{
 		Create: podValidationCreate(),
+		// default allow
+		Delete: func(r *admission.AdmissionRequest) (*Result, error) {
+			return &Result{Allowed: true}, nil
+		},
+		Update: func(r *admission.AdmissionRequest) (*Result, error) {
+			return &Result{Allowed: true}, nil
+		},
+		Connect: func(r *admission.AdmissionRequest) (*Result, error) {
+			return &Result{Allowed: true}, nil
+		},
 	}
 }
 
