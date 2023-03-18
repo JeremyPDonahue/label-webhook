@@ -41,54 +41,8 @@
 					"run": "toolbox"
 				},
 				"annotations": {
-					"kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{},\"labels\":{\"run\":\"toolbox\"},\"name\":\"test-pod01\",\"namespace\":\"test1\"},\"spec\":{\"containers\":[{\"image\":\"jmsearcy/toolbox:latest\",\"name\":\"toolbox\",\"ports\":[{\"containerPort\":8080}]}]}}\n"
-				},
-				"managedFields": [{
-					"manager": "kubectl",
-					"operation": "Update",
-					"apiVersion": "v1",
-					"time": "2020-10-11T05:15:41Z",
-					"fieldsType": "FieldsV1",
-					"fieldsV1": {
-						"f:metadata": {
-							"f:annotations": {
-								".": {},
-								"f:kubectl.kubernetes.io/last-applied-configuration": {}
-							},
-							"f:labels": {
-								".": {},
-								"f:run": {}
-							}
-						},
-						"f:spec": {
-							"f:containers": {
-								"k:{\"name\":\"toolbox\"}": {
-									".": {},
-									"f:image": {},
-									"f:imagePullPolicy": {},
-									"f:name": {},
-									"f:ports": {
-										".": {},
-										"k:{\"containerPort\":8080,\"protocol\":\"TCP\"}": {
-											".": {},
-											"f:containerPort": {},
-											"f:protocol": {}
-										}
-									},
-									"f:resources": {},
-									"f:terminationMessagePath": {},
-									"f:terminationMessagePolicy": {}
-								}
-							},
-							"f:dnsPolicy": {},
-							"f:enableServiceLinks": {},
-							"f:restartPolicy": {},
-							"f:schedulerName": {},
-							"f:securityContext": {},
-							"f:terminationGracePeriodSeconds": {}
-						}
-					}
-				}]
+						"AdminNoMutate": "false"
+				}
 			},
 			"spec": {
 				"volumes": [{
