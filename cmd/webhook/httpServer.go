@@ -57,7 +57,7 @@ func httpServer(cfg *config.Config) {
 		WriteTimeout: time.Duration(cfg.WebServerWriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(cfg.WebServerIdleTimeout) * time.Second,
 		TLSConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
+			MinVersion: tls.VersionTLS13,
 			CipherSuites: []uint16{
 				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
 				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -72,31 +72,18 @@ func httpServer(cfg *config.Config) {
 		},
 	}
 
+	ah := &admissionHandler{
+		decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
+	}
+
 	// healthcheck
-	path.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-		webHealthCheck(w, r)
-	})
+	path.HandleFunc("/healthcheck", webHealthCheck)
 	// pod admission
-	path.HandleFunc("/api/v1/admit/pod", func(w http.ResponseWriter, r *http.Request) {
-		ah := &admissionHandler{
-			decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
-		}
-		ah.Serve(operations.PodsValidation())
-	})
+	path.HandleFunc("/api/v1/admit/pod", ah.Serve(operations.PodsValidation()))
 	// deployment admission
-	path.HandleFunc("/api/v1/admit/deployemnt", func(w http.ResponseWriter, r *http.Request) {
-		ah := &admissionHandler{
-			decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
-		}
-		ah.Serve(operations.DeploymentsValidation())
-	})
+	path.HandleFunc("/api/v1/admit/deployment", ah.Serve(operations.DeploymentsValidation()))
 	// pod mutation
-	path.HandleFunc("/api/v1/mutate/pod", func(w http.ResponseWriter, r *http.Request) {
-		ah := &admissionHandler{
-			decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
-		}
-		ah.Serve(operations.PodsMutation())
-	})
+	path.HandleFunc("/api/v1/mutate/pod", ah.Serve(operations.PodsMutation()))
 	// web root
 	path.HandleFunc("/", webRoot)
 
@@ -148,7 +135,7 @@ func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method != http.MethodPost {
-			msg := "malformed admission review: request is nil"
+			msg := fmt.Sprintf("incorrect method: got request type %s, expected request type %s", r.Method, http.MethodPost)
 			log.Printf("[TRACE] %s", msg)
 			tmpltError(w, http.StatusMethodNotAllowed, msg)
 			return
