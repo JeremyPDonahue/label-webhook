@@ -2,10 +2,9 @@ package operations
 
 import (
 	"fmt"
-	"log"
 
 	admission "k8s.io/api/admission/v1"
-	v1 "k8s.io/api/core/v1"
+	core "k8s.io/api/core/v1"
 )
 
 func PodsMutation() Hook {
@@ -33,9 +32,8 @@ func podMutationCreate() AdmitFunc {
 		}
 
 		// if pod is administratively exempt
-		if func(pod *v1.Pod) bool {
+		if func(pod *core.Pod) bool {
 			for label, value := range pod.Annotations {
-				log.Printf("[TRACE] Checking Metadata: %s=%s", label, value)
 				if label == "AdminNoMutate" && value == "true" {
 					return false
 				}
