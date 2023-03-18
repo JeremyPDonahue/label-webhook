@@ -11,10 +11,10 @@ import (
 
 func forever() {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-c
-	log.Printf("[INFO] shutting down, detected signal: %s", sig)
+	log.Printf("[INFO] Received %s signal, shutting down...", sig)
 }
 
 func main() {

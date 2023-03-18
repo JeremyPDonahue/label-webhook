@@ -1,4 +1,4 @@
-package main
+package operations
 
 const (
 	addOperation     = "add"
@@ -8,15 +8,17 @@ const (
 	moveOperation    = "move"
 )
 
-type patchOperation struct {
+// PatchOperation is an operation of a JSON patch https://tools.ietf.org/html/rfc6902.
+type PatchOperation struct {
 	Op    string      `json:"op"`
 	Path  string      `json:"path"`
 	From  string      `json:"from"`
 	Value interface{} `json:"value,omitempty"`
 }
 
-func addPatchOperation(path string, value interface{}) patchOperation {
-	return patchOperation{
+// AddPatchOperation returns an add JSON patch operation.
+func AddPatchOperation(path string, value interface{}) PatchOperation {
+	return PatchOperation{
 		Op:    addOperation,
 		Path:  path,
 		Value: value,
@@ -24,16 +26,16 @@ func addPatchOperation(path string, value interface{}) patchOperation {
 }
 
 // RemovePatchOperation returns a remove JSON patch operation.
-func removePatchOperation(path string) patchOperation {
-	return patchOperation{
+func RemovePatchOperation(path string) PatchOperation {
+	return PatchOperation{
 		Op:   removeOperation,
 		Path: path,
 	}
 }
 
 // ReplacePatchOperation returns a replace JSON patch operation.
-func replacePatchOperation(path string, value interface{}) patchOperation {
-	return patchOperation{
+func ReplacePatchOperation(path string, value interface{}) PatchOperation {
+	return PatchOperation{
 		Op:    replaceOperation,
 		Path:  path,
 		Value: value,
@@ -41,8 +43,8 @@ func replacePatchOperation(path string, value interface{}) patchOperation {
 }
 
 // CopyPatchOperation returns a copy JSON patch operation.
-func copyPatchOperation(from, path string) patchOperation {
-	return patchOperation{
+func CopyPatchOperation(from, path string) PatchOperation {
+	return PatchOperation{
 		Op:   copyOperation,
 		Path: path,
 		From: from,
@@ -50,8 +52,8 @@ func copyPatchOperation(from, path string) patchOperation {
 }
 
 // MovePatchOperation returns a move JSON patch operation.
-func movePatchOperation(from, path string) patchOperation {
-	return patchOperation{
+func MovePatchOperation(from, path string) PatchOperation {
+	return PatchOperation{
 		Op:   moveOperation,
 		Path: path,
 		From: from,

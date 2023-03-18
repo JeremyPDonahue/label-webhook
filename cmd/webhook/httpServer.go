@@ -1,14 +1,25 @@
 package main
 
 import (
-	"crypto/tls"
+	"encoding/json"
+	"fmt"
+	"io"
 	"log"
-	"mutating-webhook/internal/certificate"
-	"mutating-webhook/internal/config"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"crypto/tls"
+	"net/http"
+
+	"mutating-webhook/internal/certificate"
+	"mutating-webhook/internal/config"
+	"mutating-webhook/internal/operations"
+
+	admission "k8s.io/api/admission/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 const InvalidMethod string = "Invalid http method."
@@ -62,9 +73,30 @@ func httpServer(cfg *config.Config) {
 	}
 
 	// healthcheck
-	path.HandleFunc("/healthcheck", webHealthCheck)
-	// api-endpoint
-	path.HandleFunc("/api/v1/mutate", webMutatePod)
+	path.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+		webHealthCheck(w, r)
+	})
+	// pod admission
+	path.HandleFunc("/api/v1/admit/pod", func(w http.ResponseWriter, r *http.Request) {
+		ah := &admissionHandler{
+			decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
+		}
+		ah.Serve(operations.PodsValidation())
+	})
+	// deployment admission
+	path.HandleFunc("/api/v1/admit/deployemnt", func(w http.ResponseWriter, r *http.Request) {
+		ah := &admissionHandler{
+			decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
+		}
+		ah.Serve(operations.DeploymentsValidation())
+	})
+	// pod mutation
+	path.HandleFunc("/api/v1/mutate/pod", func(w http.ResponseWriter, r *http.Request) {
+		ah := &admissionHandler{
+			decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
+		}
+		ah.Serve(operations.PodsMutation())
+	})
 	// web root
 	path.HandleFunc("/", webRoot)
 
@@ -100,5 +132,95 @@ func webHealthCheck(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Printf("[DEBUG] Request to '/healthcheck' was made using the wrong method: expected %s, got %s", "GET", strings.ToUpper(r.Method))
 		tmpltError(w, http.StatusBadRequest, InvalidMethod)
+	}
+}
+
+type admissionHandler struct {
+	decoder runtime.Decoder
+}
+
+// Serve returns a http.HandlerFunc for an admission webhook
+func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		httpAccessLog(r)
+		crossSiteOrigin(w)
+		strictTransport(w)
+
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method != http.MethodPost {
+			msg := "malformed admission review: request is nil"
+			log.Printf("[TRACE] %s", msg)
+			tmpltError(w, http.StatusMethodNotAllowed, msg)
+			return
+		}
+
+		if contentType := r.Header.Get("Content-Type"); contentType != "application/json" {
+			msg := "only content type 'application/json' is supported"
+			log.Printf("[TRACE] %s", msg)
+			tmpltError(w, http.StatusBadRequest, msg)
+			return
+		}
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			msg := fmt.Sprintf("could not read request body: %v", err)
+			log.Printf("[TRACE] %s", msg)
+			tmpltError(w, http.StatusBadRequest, msg)
+			return
+		}
+
+		var review admission.AdmissionReview
+		if _, _, err := h.decoder.Decode(body, nil, &review); err != nil {
+			msg := fmt.Sprintf("could not deserialize request: %v", err)
+			log.Printf("[TRACE] %s", msg)
+			tmpltError(w, http.StatusBadRequest, msg)
+			return
+		}
+
+		if review.Request == nil {
+			msg := "malformed admission review: request is nil"
+			log.Printf("[TRACE] %s", msg)
+			tmpltError(w, http.StatusBadRequest, msg)
+			return
+		}
+
+		result, err := hook.Execute(review.Request)
+		if err != nil {
+			msg := err.Error()
+			log.Printf("[ERROR] Internal Server Error: %s", msg)
+			tmpltError(w, http.StatusInternalServerError, msg)
+			return
+		}
+
+		admissionResponse := admission.AdmissionReview{
+			Response: &admission.AdmissionResponse{
+				UID:     review.Request.UID,
+				Allowed: result.Allowed,
+				Result:  &meta.Status{Message: result.Msg},
+			},
+		}
+
+		// set the patch operations for mutating admission
+		if len(result.PatchOps) > 0 {
+			patchBytes, err := json.Marshal(result.PatchOps)
+			if err != nil {
+				msg := fmt.Sprintf("could not marshal JSON patch: %v", err)
+				log.Printf("[ERROR] %s", msg)
+				tmpltError(w, http.StatusInternalServerError, msg)
+			}
+			admissionResponse.Response.Patch = patchBytes
+		}
+
+		res, err := json.Marshal(admissionResponse)
+		if err != nil {
+			msg := fmt.Sprintf("could not marshal response: %v", err)
+			log.Printf("[ERROR] %s", msg)
+			tmpltError(w, http.StatusInternalServerError, msg)
+			return
+		}
+
+		log.Printf("[INFO] Webhook [%s - %s] - Allowed: %t", r.URL.Path, review.Request.Operation, result.Allowed)
+		w.WriteHeader(http.StatusOK)
+		w.Write(res)
 	}
 }
