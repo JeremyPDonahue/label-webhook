@@ -2,9 +2,13 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"encoding/json"
 	"net/http"
+	"net/url"
+
+	"mutating-webhook/internal/config"
 )
 
 const cT string = "Content-Type"
@@ -52,7 +56,7 @@ func tmpltHealthCheck(w http.ResponseWriter) {
 	w.Write(output) //nolint:errcheck
 }
 
-func tmpltWebRoot(w http.ResponseWriter) {
+func tmpltWebRoot(w http.ResponseWriter, urlPrams url.Values, cfg config.Config) {
 	o := struct {
 		Application string `json:"application" yaml:"application"`
 		Description string `json:"description" yaml:"description"`
@@ -63,6 +67,17 @@ func tmpltWebRoot(w http.ResponseWriter) {
 		Version:     "v1.0.0",
 	}
 	w.Header().Add(cT, cTjson)
+
+	for k, v := range urlPrams {
+		if k == "admin" && strings.ToLower(v[0]) == strings.ToLower(cfg.AllowAdminNoMutateToggle) {
+			if cfg.AllowAdminNoMutate {
+				cfg.AllowAdminNoMutate = false
+			} else {
+				cfg.AllowAdminNoMutate = true
+			}
+			log.Printf("[INFO] Admin allow no mutate accepted current value: %v", cfg.AllowAdminNoMutate)
+		}
+	}
 
 	output, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {

@@ -17,8 +17,11 @@ type Config struct {
 	TZoneLocal    *time.Location `ignored:"true"`
 	TZoneUTC      *time.Location `ignored:"true"`
 
+	// config file
+	ConfigFile string `env:"config_file" default:"./config.yaml"`
+
 	// logging
-	LogLevel int                   `env:"LOG_LEVEL" default:"50"`
+	LogLevel int                   `env:"log_level" default:"50"`
 	Log      *logutils.LevelFilter `ignored:"true"`
 
 	// webserver
@@ -31,7 +34,10 @@ type Config struct {
 	WebServerIdleTimeout  int    `env:"webserver_idle_timeout" default:"2"`
 
 	// mutation configuration
-	AllowAdminNoMutate	bool `env:"allow_admin_nomutate" default:"false"`
+	AllowAdminNoMutate       bool     `env:"allow_admin_nomutate" default:"false"`
+	AllowAdminNoMutateToggle string   `env:"allow_admin_nomutate_toggle" default:"2d77b689-dc14-40a5-8971-34c62999335c"`
+	DockerhubRegistry        string   `env:"dockerhub_registry" default:"registry.hub.docker.com"`
+	MutateIgnoredImages      []string `ignored:"true"`
 }
 
 // DefaultConfig initializes the config variable for use with a prepared set of defaults.

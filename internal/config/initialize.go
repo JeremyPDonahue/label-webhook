@@ -73,6 +73,22 @@ func Init() *Config {
 	// print running config
 	cfg.printRunningConfig(cfgInfo)
 
+	// read config file
+	configFileData, err := getConfigFileData(cfg.ConfigFile)
+	if err != nil {
+		log.Fatalf("[FATAL] Unable to read configuration file")
+	}
+	if cfg.AllowAdminNoMutate == false {
+		cfg.AllowAdminNoMutate = configFileData.AllowAdminNoMutate
+	}
+	if cfg.AllowAdminNoMutateToggle == "2d77b689-dc14-40a5-8971-34c62999335c" {
+		cfg.AllowAdminNoMutateToggle = configFileData.AllowAdminNoMutateToggle
+	}
+	if cfg.DockerhubRegistry == "registry.hub.docker.com" {
+		cfg.DockerhubRegistry = configFileData.DockerhubRegistry
+	}
+	cfg.MutateIgnoredImages = configFileData.MutateIgnoredImages
+
 	log.Println("[INFO] initialization sequence complete")
 	return cfg
 }

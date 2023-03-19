@@ -11,8 +11,10 @@ import (
 
 func PodsValidation() Hook {
 	return Hook{
-		Create: podValidationCreate(),
 		// default allow
+		Create: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
+			return &Result{Allowed: true}, nil
+		},
 		Delete: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},

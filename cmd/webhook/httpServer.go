@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"crypto/tls"
@@ -77,49 +76,48 @@ func httpServer(cfg *config.Config) {
 		config:  cfg,
 	}
 
-	// healthcheck
-	path.HandleFunc("/healthcheck", webHealthCheck)
+	wh := &webHandler{
+		config: cfg,
+	}
+
 	// pod admission
-	path.HandleFunc("/api/v1/admit/pod", ah.Serve(operations.PodsValidation()))
+	path.HandleFunc("/api/v1/admit/pod", ah.ahServe(operations.PodsValidation()))
 	// deployment admission
-	path.HandleFunc("/api/v1/admit/deployment", ah.Serve(operations.DeploymentsValidation()))
+	path.HandleFunc("/api/v1/admit/deployment", ah.ahServe(operations.DeploymentsValidation()))
 	// pod mutation
-	path.HandleFunc("/api/v1/mutate/pod", ah.Serve(operations.PodsMutation()))
+	path.HandleFunc("/api/v1/mutate/pod", ah.ahServe(operations.PodsMutation()))
 	// web root
-	path.HandleFunc("/", webRoot)
+	path.HandleFunc("/", wh.webServe())
 
 	if err := connection.ListenAndServeTLS("", ""); err != nil {
 		log.Fatalf("[ERROR] %s\n", err)
 	}
 }
 
-func webRoot(w http.ResponseWriter, r *http.Request) {
-	httpAccessLog(r)
-	crossSiteOrigin(w)
-	strictTransport(w)
-
-	switch {
-	case strings.ToLower(r.Method) != "get":
-		log.Printf("[DEBUG] Request to '/' was made using the wrong method: expected %s, got %s", "GET", strings.ToUpper(r.Method))
-		tmpltError(w, http.StatusBadRequest, InvalidMethod)
-	case r.URL.Path != "/":
-		log.Printf("[DEBUG] Unable to locate requested path: '%s'", r.URL.Path)
-		tmpltError(w, http.StatusNotFound, "Requested path not found.")
-	default:
-		tmpltWebRoot(w)
-	}
+type webHandler struct {
+	config *config.Config
 }
 
-func webHealthCheck(w http.ResponseWriter, r *http.Request) {
-	httpAccessLog(r)
-	crossSiteOrigin(w)
-	strictTransport(w)
+func (h *webHandler) webServe() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		httpAccessLog(r)
+		crossSiteOrigin(w)
+		strictTransport(w)
 
-	if strings.ToLower(r.Method) == "get" {
-		tmpltHealthCheck(w)
-	} else {
-		log.Printf("[DEBUG] Request to '/healthcheck' was made using the wrong method: expected %s, got %s", "GET", strings.ToUpper(r.Method))
-		tmpltError(w, http.StatusBadRequest, InvalidMethod)
+		switch {
+		case r.Method != http.MethodGet:
+			msg := fmt.Sprintf("incorrect method: got request type %s, expected request type %s", r.Method, http.MethodPost)
+			log.Printf("[DEBUG] %s", msg)
+			tmpltError(w, http.StatusMethodNotAllowed, msg)
+		case r.URL.Path == "/healthcheck":
+			tmpltHealthCheck(w)
+		case r.URL.Path == "/":
+			tmpltWebRoot(w, r.URL.Query(), *h.config)
+		default:
+			msg := fmt.Sprintf("Unable to locate requested path: '%s'", r.URL.Path)
+			log.Printf("[DEBUG] %s", msg)
+			tmpltError(w, http.StatusNotFound, msg)
+		}
 	}
 }
 
@@ -128,8 +126,7 @@ type admissionHandler struct {
 	config  *config.Config
 }
 
-// Serve returns a http.HandlerFunc for an admission webhook
-func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
+func (h *admissionHandler) ahServe(hook operations.Hook) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpAccessLog(r)
 		crossSiteOrigin(w)
@@ -138,14 +135,14 @@ func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method != http.MethodPost {
 			msg := fmt.Sprintf("incorrect method: got request type %s, expected request type %s", r.Method, http.MethodPost)
-			log.Printf("[TRACE] %s", msg)
+			log.Printf("[DEBUG] %s", msg)
 			tmpltError(w, http.StatusMethodNotAllowed, msg)
 			return
 		}
 
 		if contentType := r.Header.Get("Content-Type"); contentType != "application/json" {
 			msg := "only content type 'application/json' is supported"
-			log.Printf("[TRACE] %s", msg)
+			log.Printf("[DEBUG] %s", msg)
 			tmpltError(w, http.StatusBadRequest, msg)
 			return
 		}
@@ -153,7 +150,7 @@ func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			msg := fmt.Sprintf("could not read request body: %v", err)
-			log.Printf("[TRACE] %s", msg)
+			log.Printf("[DEBUG] %s", msg)
 			tmpltError(w, http.StatusBadRequest, msg)
 			return
 		}
@@ -161,14 +158,14 @@ func (h *admissionHandler) Serve(hook operations.Hook) http.HandlerFunc {
 		var review admission.AdmissionReview
 		if _, _, err := h.decoder.Decode(body, nil, &review); err != nil {
 			msg := fmt.Sprintf("could not deserialize request: %v", err)
-			log.Printf("[TRACE] %s", msg)
+			log.Printf("[DEBUG] %s", msg)
 			tmpltError(w, http.StatusBadRequest, msg)
 			return
 		}
 
 		if review.Request == nil {
 			msg := "malformed admission review: request is nil"
-			log.Printf("[TRACE] %s", msg)
+			log.Printf("[DEBUG] %s", msg)
 			tmpltError(w, http.StatusBadRequest, msg)
 			return
 		}
