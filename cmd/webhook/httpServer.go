@@ -101,10 +101,12 @@ func webServe() http.HandlerFunc {
 			msg := fmt.Sprintf("incorrect method: got request type %s, expected request type %s", r.Method, http.MethodPost)
 			log.Printf("[DEBUG] %s", msg)
 			tmpltError(w, http.StatusMethodNotAllowed, msg)
+		case r.URL.Path == "/api/v1/admin":
+			tmpltAdminToggle(w, r.URL.Query())
 		case r.URL.Path == "/healthcheck":
 			tmpltHealthCheck(w)
 		case r.URL.Path == "/":
-			tmpltWebRoot(w, r.URL.Query())
+			tmpltWebRoot(w)
 		default:
 			msg := fmt.Sprintf("Unable to locate requested path: '%s'", r.URL.Path)
 			log.Printf("[DEBUG] %s", msg)
