@@ -37,7 +37,7 @@ func strictTransport(w http.ResponseWriter) {
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000")
 }
 
-func httpServer(cfg *config.Config) {
+func httpServer() {
 	var serverCertificate tls.Certificate
 	if config.DefaultConfig().WebServerCertificate == "" || cfg.WebServerKey == "" {
 		log.Printf("[INFO] No webserver certificate configured, automatically generating self signed certificate.")
@@ -73,11 +73,7 @@ func httpServer(cfg *config.Config) {
 
 	ah := &admissionHandler{
 		decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
-		config:  cfg,
-	}
-
-	wh := &webHandler{
-		config: cfg,
+		config:  &cfg,
 	}
 
 	// pod admission
@@ -87,18 +83,14 @@ func httpServer(cfg *config.Config) {
 	// pod mutation
 	path.HandleFunc("/api/v1/mutate/pod", ah.ahServe(operations.PodsMutation()))
 	// web root
-	path.HandleFunc("/", wh.webServe())
+	path.HandleFunc("/", webServe())
 
 	if err := connection.ListenAndServeTLS("", ""); err != nil {
 		log.Fatalf("[ERROR] %s\n", err)
 	}
 }
 
-type webHandler struct {
-	config *config.Config
-}
-
-func (h *webHandler) webServe() http.HandlerFunc {
+func webServe() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		httpAccessLog(r)
 		crossSiteOrigin(w)
@@ -112,7 +104,7 @@ func (h *webHandler) webServe() http.HandlerFunc {
 		case r.URL.Path == "/healthcheck":
 			tmpltHealthCheck(w)
 		case r.URL.Path == "/":
-			tmpltWebRoot(w, r.URL.Query(), *h.config)
+			tmpltWebRoot(w, r.URL.Query())
 		default:
 			msg := fmt.Sprintf("Unable to locate requested path: '%s'", r.URL.Path)
 			log.Printf("[DEBUG] %s", msg)
@@ -170,7 +162,7 @@ func (h *admissionHandler) ahServe(hook operations.Hook) http.HandlerFunc {
 			return
 		}
 
-		result, err := hook.Execute(review.Request, h.config)
+		result, err := hook.Execute(review.Request, &cfg)
 		if err != nil {
 			msg := err.Error()
 			log.Printf("[ERROR] Internal Server Error: %s", msg)

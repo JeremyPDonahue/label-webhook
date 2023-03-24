@@ -19,10 +19,10 @@ func getOSEnv(env, def string) string {
 // Init initializes the application configuration by reading default values from the struct's tags
 // and environment variables. Tags processed by this process are as follows:
 // `ignored:"true" env:"ENVIRONMENT_VARIABLE" default:"default value"`
-func Init() *Config {
+func Init() Config {
 	cfg := DefaultConfig()
 
-	cfgInfo, err := getStructInfo(cfg)
+	cfgInfo, err := getStructInfo(&cfg)
 	if err != nil {
 		log.Fatalf("[FATAL] %v", err)
 	}
@@ -34,7 +34,7 @@ func Init() *Config {
 			if info.DefaultValue != nil {
 				dv = info.DefaultValue.(string)
 			}
-			p := reflect.ValueOf(cfg).Elem().FieldByName(info.Name).Addr().Interface().(*string)
+			p := reflect.ValueOf(&cfg).Elem().FieldByName(info.Name).Addr().Interface().(*string)
 			flag.StringVar(p, info.Name, dv, "("+info.Key+")")
 
 		case "bool":
@@ -42,7 +42,7 @@ func Init() *Config {
 			if info.DefaultValue != nil {
 				dv = info.DefaultValue.(bool)
 			}
-			p := reflect.ValueOf(cfg).Elem().FieldByName(info.Name).Addr().Interface().(*bool)
+			p := reflect.ValueOf(&cfg).Elem().FieldByName(info.Name).Addr().Interface().(*bool)
 			flag.BoolVar(p, info.Name, dv, "("+info.Key+")")
 
 		case "int":
@@ -50,14 +50,14 @@ func Init() *Config {
 			if info.DefaultValue != nil {
 				dv = int(info.DefaultValue.(int64))
 			}
-			p := reflect.ValueOf(cfg).Elem().FieldByName(info.Name).Addr().Interface().(*int)
+			p := reflect.ValueOf(&cfg).Elem().FieldByName(info.Name).Addr().Interface().(*int)
 			flag.IntVar(p, info.Name, dv, "("+info.Key+")")
 		}
 	}
 	flag.Parse()
 
 	// set logging level
-	cfg.setLogLevel()
+	setLogLevel(cfg)
 
 	// timezone & format configuration
 	cfg.TZoneUTC, _ = time.LoadLocation("UTC")
@@ -71,7 +71,7 @@ func Init() *Config {
 	time.Now().Format(cfg.TimeFormat)
 
 	// print running config
-	cfg.printRunningConfig(cfgInfo)
+	printRunningConfig(&cfg, cfgInfo)
 
 	// read config file
 	configFileData, err := getConfigFileData(cfg.ConfigFile)

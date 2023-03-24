@@ -4,31 +4,31 @@ import (
 	"log"
 	"strings"
 
-	"mutating-webhook/internal/config"
-
 	admission "k8s.io/api/admission/v1"
+
+	"mutating-webhook/internal/config"
 )
 
 func PodsValidation() Hook {
 	return Hook{
 		// default allow
-		Create: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
+		Create: func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
-		Delete: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
+		Delete: func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
-		Update: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
+		Update: func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
-		Connect: func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
+		Connect: func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
 	}
 }
 
 func podValidationCreate() AdmitFunc {
-	return func(r *admission.AdmissionRequest, cfg config.Config) (*Result, error) {
+	return func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
 		pod, err := parsePod(r.Object.Raw)
 		if err != nil {
 			return &Result{Msg: err.Error()}, nil

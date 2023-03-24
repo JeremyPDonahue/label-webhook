@@ -41,8 +41,8 @@ type Config struct {
 }
 
 // DefaultConfig initializes the config variable for use with a prepared set of defaults.
-func DefaultConfig() *Config {
-	return &Config{
+func DefaultConfig() Config {
+	return Config{
 		Log: &logutils.LevelFilter{
 			Levels: []logutils.LogLevel{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"},
 			Writer: os.Stderr,
@@ -50,7 +50,7 @@ func DefaultConfig() *Config {
 	}
 }
 
-func (cfg *Config) setLogLevel() {
+func setLogLevel(cfg Config) {
 	switch {
 	case cfg.LogLevel <= 20:
 		cfg.Log.SetMinLevel(logutils.LogLevel("ERROR"))
@@ -66,7 +66,7 @@ func (cfg *Config) setLogLevel() {
 	log.SetOutput(cfg.Log)
 }
 
-func (cfg *Config) printRunningConfig(cfgInfo []StructInfo) {
+func printRunningConfig(cfg *Config, cfgInfo []StructInfo) {
 	log.Printf("[DEBUG] Current Running Configuration Values:")
 	for _, info := range cfgInfo {
 		switch info.Type.String() {

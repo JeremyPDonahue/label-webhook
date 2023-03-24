@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-
-	"mutating-webhook/internal/config"
 )
 
 const cT string = "Content-Type"
@@ -56,7 +54,7 @@ func tmpltHealthCheck(w http.ResponseWriter) {
 	w.Write(output) //nolint:errcheck
 }
 
-func tmpltWebRoot(w http.ResponseWriter, urlPrams url.Values, cfg config.Config) {
+func tmpltWebRoot(w http.ResponseWriter, urlPrams url.Values) {
 	o := struct {
 		Application string `json:"application" yaml:"application"`
 		Description string `json:"description" yaml:"description"`

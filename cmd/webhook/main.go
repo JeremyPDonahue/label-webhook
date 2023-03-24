@@ -10,6 +10,9 @@ import (
 	"mutating-webhook/internal/config"
 )
 
+// global configuration
+var cfg config.Config
+
 func forever() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -24,9 +27,9 @@ func main() {
 	}()
 
 	// initialize application configuration
-	cfg := config.Init()
+	cfg = config.Init()
 
-	go httpServer(cfg)
+	go httpServer()
 
 	forever()
 }
