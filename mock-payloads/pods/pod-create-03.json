@@ -52,8 +52,8 @@
 					}
 				}],
 				"containers": [{
-					"name": "toolbox",
-					"image": "jmsearcy/toolbox:v1.0.0",
+					"name": "alpine",
+					"image": "registry.c.test-chamber-13.lan/library/alpine:3.17",
 					"ports": [{
 						"containerPort": 8080,
 						"protocol": "TCP"
