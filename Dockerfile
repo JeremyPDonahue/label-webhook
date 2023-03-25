@@ -23,7 +23,6 @@ FROM scratch
 COPY --from=certHost /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=certHost /etc/passwd /etc/group /etc/
 COPY --from=builder --chown=app:app /go/src/app/webhook /app/webhook
-COPY html/ /app/html/
 
 USER app:app
 WORKDIR /app/
