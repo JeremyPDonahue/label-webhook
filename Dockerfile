@@ -1,12 +1,12 @@
 # Step 1 - Certificate Container
 ####
-FROM registry.c.test-chamber-13.lan/library/alpine:latest as certHost
+FROM registry.c.test-chamber-13.lan/library/alpine:latest AS certHost
 RUN addgroup -S -g 1000 app && \
     adduser --disabled-password -G app --gecos "application account" --home "/home/app" --shell "/sbin/nologin" --no-create-home --uid 1000 app
 
 # Step 2 - Build Container
 ####
-FROM registry.c.test-chamber-13.lan/dockerhub/library/golang:alpine as builder
+FROM registry.c.test-chamber-13.lan/dockerhub/library/golang:alpine AS builder
 
 COPY . /go/src/app
 
