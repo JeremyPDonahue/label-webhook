@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"mutating-webhook/internal/certificate"
 	"mutating-webhook/internal/config"
 	"mutating-webhook/internal/operations"
 
@@ -37,16 +36,9 @@ func strictTransport(w http.ResponseWriter) {
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000")
 }
 
-func httpServer() {
-	var serverCertificate tls.Certificate
-	if config.DefaultConfig().WebServerCertificate == "" || cfg.WebServerKey == "" {
-		log.Printf("[INFO] No webserver certificate configured, automatically generating self signed certificate.")
-		serverCertificate = certificate.CreateServerCert()
-	} else {
-		log.Fatal("[FATAL] Code to support external webserver certificate is not complete yet. ./cmd/webhook/httpServer.go:36")
-		// read certificate from files
-		// check for errors
-	}
+func httpServer(cfg *config.Config) {
+	serverCertificate, _ := tls.X509KeyPair(append([]byte(cfg.CertCert), []byte(cfg.CACert)...), []byte(cfg.CertPrivateKey))
+
 	path := http.NewServeMux()
 
 	connection := &http.Server{
@@ -73,7 +65,7 @@ func httpServer() {
 
 	ah := &admissionHandler{
 		decoder: serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer(),
-		config:  &cfg,
+		config:  cfg,
 	}
 
 	// pod admission

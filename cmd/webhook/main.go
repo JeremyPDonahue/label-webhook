@@ -29,7 +29,7 @@ func main() {
 	// initialize application configuration
 	cfg = config.Init()
 
-	go httpServer()
+	go httpServer(&cfg)
 
 	forever()
 }

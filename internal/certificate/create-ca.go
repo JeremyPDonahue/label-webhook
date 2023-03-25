@@ -2,18 +2,19 @@ package certificate
 
 import (
 	"bytes"
+	"fmt"
+	"log"
 	"strconv"
 	"time"
 
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
 )
 
-func CreateCA() ([]byte, []byte, []byte, error) {
+func CreateCA(privateKey string) (string, error) {
 	serial, _ := strconv.ParseInt(time.Now().Format("20060102150405"), 10, 64)
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(serial),
@@ -37,14 +38,18 @@ func CreateCA() ([]byte, []byte, []byte, error) {
 		SignatureAlgorithm:    x509.SHA384WithRSA,
 	}
 
-	keyPair, err := rsa.GenerateKey(rand.Reader, 4096)
+	pemKey, _ := pem.Decode([]byte(privateKey))
+	if pemKey == nil || pemKey.Type != "RSA PRIVATE KEY" {
+		return "", fmt.Errorf("failed to decode PEM block containing private key")
+	}
+	keyPair, err := x509.ParsePKCS1PrivateKey(pemKey.Bytes)
 	if err != nil {
-		return []byte(""), []byte(""), []byte(""), err
+		return "", err
 	}
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &keyPair.PublicKey, keyPair)
 	if err != nil {
-		return []byte(""), []byte(""), []byte(""), err
+		return "", err
 	}
 
 	c := new(bytes.Buffer)
@@ -53,17 +58,6 @@ func CreateCA() ([]byte, []byte, []byte, error) {
 		Bytes: certBytes,
 	})
 
-	k := new(bytes.Buffer)
-	pem.Encode(k, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(keyPair),
-	})
-
-	p := new(bytes.Buffer)
-	pem.Encode(p, &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: x509.MarshalPKCS1PublicKey(&keyPair.PublicKey),
-	})
-
-	return c.Bytes(), k.Bytes(), p.Bytes(), nil
+	log.Printf("[DEBUG] Generated Certificate Authority Certificate:\n%s", c)
+	return c.String(), nil
 }

@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: mutating-webhool
+  labels:
+    app: mutating-webhook
+spec:
+  selector:
+    matchLabels:
+      app: mutating-webhook
+  template:
+    metadata:
+      labels:
+        app: mutating-webhook
+    spec:
+      volumes:
+      - name: config
+        configMap:
+          name: webhook-config
+          defaultMode: 493
+          optional: false
+      containers:
+      - name: mutating-webhook
+        imagePullPolicy: Always
+        env:
+        - name: DOCKERHUB_REGISTRY
+          value: registry.c.test-chamber-13.lan/dockerhub
+        - name: ALLOW_ADMIN_NOMUTATE
+          value: "true"
+        - name: CONFIG_FILE
+          value: /tmp/config/config.yaml
+        image: registry.c.test-chamber-13.lan/library/webhook:latest
+        volumeMounts:
+        - name: config
+          mountPath: /tmp/config
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8443
+            scheme: HTTPS
+          periodSeconds: 15
+          initialDelaySeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          timeoutSeconds: 2
+          failureThreshold: 1
+      terminationGracePeriodSeconds: 30
+

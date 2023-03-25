@@ -35,9 +35,15 @@ type Config struct {
 
 	// mutation configuration
 	AllowAdminNoMutate       bool     `env:"allow_admin_nomutate" default:"false"`
-	AllowAdminNoMutateToggle string   `env:"allow_admin_nomutate_toggle" default:"2d77b689-dc14-40a5-8971-34c62999335c"`
+	AllowAdminNoMutateToggle string   `env:"allow_admin_nomutate_toggle" default:"7b068a99-c02b-410a-bd59-3514bac85e7a"`
 	DockerhubRegistry        string   `env:"dockerhub_registry" default:"registry.hub.docker.com"`
 	MutateIgnoredImages      []string `ignored:"true"`
+
+	// certificate configuration
+	CACert         string `env:"ca_cert"`
+	CAPrivateKey   string `env:"ca_private_key"`
+	CertCert       string `env:"cert_cert"`
+	CertPrivateKey string `env:"cert_private_key"`
 }
 
 // DefaultConfig initializes the config variable for use with a prepared set of defaults.

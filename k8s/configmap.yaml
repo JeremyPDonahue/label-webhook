@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-config
+data:
+  config.yaml: |-
+    mutate-ignored-images:
+    - goharbor/chartmuseum-photon
+    - goharbor/harbor-core
+    - goharbor/harbor-db
+    - goharbor/harbor-jobservice
+    - goharbor/notary-server-photon
+    - goharbor/notary-signer-photon
+    - goharbor/harbor-portal
+    - goharbor/redis-photon
+    - goharbor/registry-photon
+    - goharbor/trivy-adapter-photon

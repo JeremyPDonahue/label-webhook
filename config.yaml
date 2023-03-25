@@ -1,6 +1,6 @@
 ---
 allow-admin-nomutate: false
-allow-admin-nomutate-toggle: 2d77b689-dc14-40a5-8971-34c62999335c
+allow-admin-nomutate-toggle: 7b068a99-c02b-410a-bd59-3514bac85e7a
 dockerhub-registry: registry.hub.docker.com
 mutate-ignored-images:
 - goharbor/chartmuseum-photon
