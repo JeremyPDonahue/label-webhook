@@ -15,11 +15,9 @@ import (
 func PodsMutation() Hook {
 	return Hook{
 		Create: podMutationCreate(),
+		Update: podMutationCreate(),
 		// default allow
 		Delete: func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
-			return &Result{Allowed: true}, nil
-		},
-		Update: func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
 			return &Result{Allowed: true}, nil
 		},
 		Connect: func(r *admission.AdmissionRequest, cfg *config.Config) (*Result, error) {
