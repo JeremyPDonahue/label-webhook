@@ -173,7 +173,7 @@ func certificateInit(cfg *Config) error {
 	// certificate certificate is missing, create it
 	if len(cfg.CertCert) == 0 {
 		log.Printf("[TRACE] No server certificate detected")
-		csr, err := certificate.CreateCSR(cfg.CertPrivateKey, getDNSNames(cfg.NameSpace, cfg.ServiceName))
+		csr, err := certificate.CreateCSR(cfg.CertPrivateKey, getDNSNames(cfg.ServiceName, cfg.NameSpace,))
 		if err != nil {
 			return fmt.Errorf("Create CSR (%v)", err)
 		}
@@ -187,10 +187,9 @@ func certificateInit(cfg *Config) error {
 	return nil
 }
 
-func getDNSNames(ns, service string) []string {
+func getDNSNames(service, ns string) []string {
 	return []string{
 		fmt.Sprintf("%s", service),
-		fmt.Sprintf("%s.%s", service, ns),
 		fmt.Sprintf("%s.%s", service, ns),
 		fmt.Sprintf("%s.%s.svc", service, ns),
 		fmt.Sprintf("%s.%s.svc.cluster", service, ns),
