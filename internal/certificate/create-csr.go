@@ -22,7 +22,11 @@ func CreateCSR(privateKey string) (string, error) {
 			//PostalCode:    []string{""},
 		},
 		DNSNames: []string{
-			"svc.cluster.local",
+			"webhook",
+			"webhook.ingress-nginx",
+			"webhook.ingress-nginx.svc",
+			"webhook.ingress-nginx.svc.cluster",
+			"webhook.ingress-nginx.svc.cluster.local",
 			"*.svc.cluster.local",
 		},
 		SignatureAlgorithm: x509.SHA384WithRSA,
