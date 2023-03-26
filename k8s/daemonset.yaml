@@ -1,8 +1,7 @@
----
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: mutating-webhool
+  name: mutating-webhook
   labels:
     app: mutating-webhook
 spec:

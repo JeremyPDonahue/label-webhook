@@ -1,18 +1,30 @@
 ---
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: pod-mutation
 webhooks:
-  - name: pod-mutation.default.svc
-    clientConfig:
-      service:
-        name: webhook
-        namespace: default
-        path: "/api/v1/mutate/pod"
-    rules:
-      - operations: ["CREATE", ]
-        apiGroups: [""]
-        apiVersions: ["v1"]
-        resources: ["pods"]
-    failurePolicy: Ignore
+- name: pod-mutation.ingress-nginx.svc
+  clientConfig:
+    service:
+      name: webhook
+      namespace: ingress-nginx 
+      path: "/api/v1/mutate/pod"
+      port: 443
+    caBundle: Base64 encoded Certificate Authority PEM file
+  rules:
+  - operations:
+    - "CREATE"
+    - "UPDATE"
+    apiVersions:
+    - "*"
+    apiGroups:
+    - "*"
+    resources: 
+    - "pods/*"
+    scope: "Namespaced"
+  sideEffects: None
+  admissionReviewVersions:
+  - "v1"
+  failurePolicy: Ignore
+
