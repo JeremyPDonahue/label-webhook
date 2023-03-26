@@ -104,6 +104,12 @@ func updateValues(cfg *Config, configFileData configFileStruct) {
 	if cfg.DockerhubRegistry == "registry.hub.docker.com" && configFileData.DockerhubRegistry != "registry.hub.docker.com" {
 		cfg.DockerhubRegistry = configFileData.DockerhubRegistry
 	}
+	if cfg.NameSpace == "ingress-nginx" && configFileData.Kubernetes.Namespace != "ingress-nginx" {
+		cfg.NameSpace = configFileData.Kubernetes.Namespace
+	}
+	if cfg.ServiceName == "webhook" && configFileData.Kubernetes.ServiceName != "webhook" {
+		cfg.ServiceName = configFileData.Kubernetes.ServiceName
+	}
 	if len(configFileData.MutateIgnoredImages) != 0 {
 		cfg.MutateIgnoredImages = configFileData.MutateIgnoredImages
 	}
@@ -167,7 +173,7 @@ func certificateInit(cfg *Config) error {
 	// certificate certificate is missing, create it
 	if len(cfg.CertCert) == 0 {
 		log.Printf("[TRACE] No server certificate detected")
-		csr, err := certificate.CreateCSR(cfg.CertPrivateKey)
+		csr, err := certificate.CreateCSR(cfg.CertPrivateKey, getDNSNames(cfg.NameSpace, cfg.ServiceName))
 		if err != nil {
 			return fmt.Errorf("Create CSR (%v)", err)
 		}
@@ -179,4 +185,15 @@ func certificateInit(cfg *Config) error {
 	}
 
 	return nil
+}
+
+func getDNSNames(ns, service string) []string {
+	return []string{
+		fmt.Sprintf("%s", service),
+		fmt.Sprintf("%s.%s", service, ns),
+		fmt.Sprintf("%s.%s", service, ns),
+		fmt.Sprintf("%s.%s.svc", service, ns),
+		fmt.Sprintf("%s.%s.svc.cluster", service, ns),
+		fmt.Sprintf("%s.%s.svc.cluster.local", service, ns),
+	}
 }

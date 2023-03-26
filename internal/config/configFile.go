@@ -9,18 +9,24 @@ import (
 )
 
 type configFileStruct struct {
-	AllowAdminNoMutate       bool       `yaml:"allow-admin-nomutate"`
-	AllowAdminNoMutateToggle string     `yaml:"allow-admin-nomutate-toggle"`
-	DockerhubRegistry        string     `yaml:"dockerhub-registry"`
-	MutateIgnoredImages      []string   `yaml:"mutate-ignored-images"`
-	CertificateAuthority     CertStruct `yaml:"certificate-authority"`
-	Certificate              CertStruct `yaml:"certificate"`
+	AllowAdminNoMutate       bool             `yaml:"allow-admin-nomutate"`
+	AllowAdminNoMutateToggle string           `yaml:"allow-admin-nomutate-toggle"`
+	DockerhubRegistry        string           `yaml:"dockerhub-registry"`
+	MutateIgnoredImages      []string         `yaml:"mutate-ignored-images"`
+	CertificateAuthority     CertStruct       `yaml:"certificate-authority"`
+	Certificate              CertStruct       `yaml:"certificate"`
+	Kubernetes               KubernetesStruct `yaml:"kubernetes"`
 }
 
 type CertStruct struct {
 	Certificate string `yaml:"certificate"`
 	PrivateKey  string `yaml:"private-key"`
 	PublicKey   string `yaml:"public-key"`
+}
+
+type KubernetesStruct struct {
+	Namespace   string `yaml:"namespace"`
+	ServiceName string `yaml:"service-name"`
 }
 
 func getConfigFileData(fileLocation string) (configFileStruct, error) {

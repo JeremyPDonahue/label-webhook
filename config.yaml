@@ -13,3 +13,6 @@ mutate-ignored-images:
 - goharbor/redis-photon
 - goharbor/registry-photon
 - goharbor/trivy-adapter-photon
+kubernetes:
+  namespace: ingress-nginx
+  service-name: webhook

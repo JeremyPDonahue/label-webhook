@@ -44,6 +44,10 @@ type Config struct {
 	CAPrivateKey   string `env:"ca_private_key"`
 	CertCert       string `env:"cert_cert"`
 	CertPrivateKey string `env:"cert_private_key"`
+
+	// kubernetes configuration
+	NameSpace string `env:"namespace" default:"ingress-nginx"`
+	ServiceName string `env:"service_name" default:"webhook"`
 }
 
 // DefaultConfig initializes the config variable for use with a prepared set of defaults.

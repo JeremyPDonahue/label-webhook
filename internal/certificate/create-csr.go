@@ -11,7 +11,9 @@ import (
 	"encoding/pem"
 )
 
-func CreateCSR(privateKey string) (string, error) {
+func CreateCSR(privateKey string, dnsNames []string) (string, error) {
+	dnsNames = append(dnsNames, "*.svc.cluster.local")
+
 	csr := x509.CertificateRequest{
 		Subject: pkix.Name{
 			Organization: []string{"Kubernetes Mutating Webserver"},
@@ -21,14 +23,7 @@ func CreateCSR(privateKey string) (string, error) {
 			//StreetAddress: []string{""},
 			//PostalCode:    []string{""},
 		},
-		DNSNames: []string{
-			"webhook",
-			"webhook.ingress-nginx",
-			"webhook.ingress-nginx.svc",
-			"webhook.ingress-nginx.svc.cluster",
-			"webhook.ingress-nginx.svc.cluster.local",
-			"*.svc.cluster.local",
-		},
+		DNSNames: dnsNames,
 		SignatureAlgorithm: x509.SHA384WithRSA,
 	}
 
