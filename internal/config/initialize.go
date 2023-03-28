@@ -98,7 +98,7 @@ func updateValues(cfg *Config, configFileData configFileStruct) {
 	if cfg.AllowAdminNoMutate == false && configFileData.AllowAdminNoMutate != false {
 		cfg.AllowAdminNoMutate = configFileData.AllowAdminNoMutate
 	}
-	if cfg.AllowAdminNoMutateToggle == "7b068a99-c02b-410a-bd59-3514bac85e7a" && configFileData.AllowAdminNoMutateToggle != "2d77b689-dc14-40a5-8971-34c62999335c" {
+	if cfg.AllowAdminNoMutateToggle == "7b068a99-c02b-410a-bd59-3514bac85e7a" && configFileData.AllowAdminNoMutateToggle != "7b068a99-c02b-410a-bd59-3514bac85e7a" {
 		cfg.AllowAdminNoMutateToggle = configFileData.AllowAdminNoMutateToggle
 	}
 	if cfg.DockerhubRegistry == "registry.hub.docker.com" && configFileData.DockerhubRegistry != "registry.hub.docker.com" {
