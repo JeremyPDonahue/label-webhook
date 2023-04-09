@@ -78,7 +78,7 @@ func Init() Config {
 	// read config file
 	configFileData, err := getConfigFileData(cfg.ConfigFile)
 	if err != nil {
-		log.Fatalf("[FATAL] Unable to read configuration file")
+		log.Fatalf("[FATAL] Unable to read configuration file: %v", err)
 	}
 	updateValues(&cfg, configFileData)
 
