@@ -85,7 +85,6 @@ sonar.go.coverage.reportPaths=cover.out
                         writeFile(file: workspace + "/test-chamber-13.lan.root.crt", text: functions.getCurrentRootCA())
                         writeFile(file: workspace + "/test-chamber-13.lan.ret.root.crt", text: functions.getRetiredRootCA())
                         sh """
-                            ls -lah "${workspace}"
                             if [ ! "/usr/bin/curl" ] || [ ! -x "/usr/bin/curl" ]; then
                                 apk add --no-cache curl
                             fi
@@ -102,7 +101,7 @@ sonar.go.coverage.reportPaths=cover.out
                             | tar -z -x -f - -C /usr/local/bin
                             ln -s "${workspace}" "/go/src/${env.JOB_BASE_NAME}"
                             cd "/go/src/${env.JOB_BASE_NAME}"
-                            go test -short -coverprofile=cover.out `go list ./... | grep -v vendor/`
+                            go test -short -coverprofile=cover.out \$(go list ./... | grep -v vendor/)
                             go test -v ./... 2>&1 | go-junit-report > report.xml
                         """
                     }
