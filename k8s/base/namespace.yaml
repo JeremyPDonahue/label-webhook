@@ -1,13 +1,16 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: openshift-webhook
-  labels:
-    name: openshift-webhook
-    app: custom-labels-webhook
-    component: mutating-webhook
-    openshift.io/cluster-monitoring: "true"
-    webhook.openshift.io/exempt: "true"
-  annotations:
-    openshift.io/description: "Custom Labels Mutating Webhook for OpenShift"
-    openshift.io/display-name: "Custom Labels Webhook"
+# NOTE: Using kube-system namespace - this file is not needed as kube-system already exists
+# The webhook will be deployed directly into kube-system namespace
+# 
+# If you need to create a custom namespace instead, uncomment and modify below:
+# apiVersion: v1
+# kind: Namespace
+# metadata:
+#   name: kube-system
+#   labels:
+#     name: kube-system
+#     app: custom-labels-webhook
+#     component: mutating-webhook
+#     kubernetes.io/cluster-monitoring: "true"
+#   annotations:
+#     kubernetes.io/description: "AppID Labeling Webhook for Kubernetes"
+#     kubernetes.io/display-name: "AppID Labeling Webhook"

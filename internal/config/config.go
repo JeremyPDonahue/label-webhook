@@ -55,7 +55,7 @@ type Config struct {
 	CertPrivateKey string `env:"cert_private_key"`
 
 	// kubernetes configuration
-	NameSpace       string `env:"namespace" default:"openshift-webhook"`
+	NameSpace       string `env:"namespace" default:"kube-system"`
 	ServiceName     string `env:"service_name" default:"custom-labels-webhook"`
 	ClusterName     string `env:"cluster_name" default:"openshift-cluster"`
 	WebhookName     string `env:"webhook_name" default:"custom-labels-mutator"`

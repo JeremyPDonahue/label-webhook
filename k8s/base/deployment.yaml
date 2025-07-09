@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: custom-labels-webhook
-  namespace: openshift-webhook
+  namespace: kube-system
   labels:
     app: custom-labels-webhook
     component: mutating-webhook

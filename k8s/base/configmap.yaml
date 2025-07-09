@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: webhook-config
-  namespace: openshift-webhook
+  namespace: kube-system
   labels:
     app: custom-labels-webhook
     component: mutating-webhook

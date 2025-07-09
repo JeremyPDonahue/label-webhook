@@ -7,11 +7,11 @@ metadata:
     app: custom-labels-webhook
     component: mutating-webhook
 webhooks:
-- name: custom-labels.openshift-webhook.svc.cluster.local
+- name: custom-labels.kube-system.svc.cluster.local
   clientConfig:
     service:
       name: custom-labels-webhook
-      namespace: openshift-webhook
+      namespace: kube-system
       path: "/api/v1/mutate/pod"
       port: 443
     caBundle: # Will be injected by cert-manager or OpenShift
@@ -67,7 +67,7 @@ webhooks:
       - openshift-ovn-kubernetes
       - openshift-sdn
       - openshift-user-workload-monitoring
-      - openshift-webhook
+      # Note: kube-system is already excluded above, so webhook won't affect its own namespace
   sideEffects: None
   admissionReviewVersions:
   - "v1"
