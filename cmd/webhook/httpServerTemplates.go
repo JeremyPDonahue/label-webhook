@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"strings"
 
 	"encoding/json"
 	"net/http"
@@ -60,8 +59,8 @@ func tmpltWebRoot(w http.ResponseWriter) {
 		Description string `json:"description" yaml:"description"`
 		Version     string `json:"version" yaml:"version"`
 	}{
-		Application: "Mutating-Webhook API",
-		Description: "Mutating Webhook for Simple Sidecar Injection",
+		Application: "AppID Labeling Webhook API",
+		Description: "Mutating Webhook for AppID Label Application",
 		Version:     "v1.0.0",
 	}
 	w.Header().Add(cT, cTjson)
@@ -80,19 +79,13 @@ func tmpltAdminToggle(w http.ResponseWriter, urlPrams url.Values) {
 		Version     string `json:"version" yaml:"version"`
 		AdminNoMutate bool `json:"admin-no-mutate" yaml:"admin-no-mutate"`
 	}{
-		Application: "Mutating-Webhook API",
-		Description: "Mutating Webhook for Simple Sidecar Injection",
+		Application: "AppID Labeling Webhook API",
+		Description: "Mutating Webhook for AppID Label Application",
 		Version:     "v1.0.0",
 	}
 	w.Header().Add(cT, cTjson)
 
-	for k, v := range urlPrams {
-		if k == "admin" && strings.ToLower(v[0]) == strings.ToLower(cfg.AllowAdminNoMutateToggle) {
-			cfg.AllowAdminNoMutate = !cfg.AllowAdminNoMutate
-			log.Printf("[INFO] Admin allow no mutate accepted current value: %v", cfg.AllowAdminNoMutate)
-		}
-	}
-
+	// Admin toggle functionality removed for simplified webhook
 	o.AdminNoMutate = cfg.AllowAdminNoMutate
 
 	output, err := json.MarshalIndent(o, "", "  ")

@@ -20,14 +20,14 @@ func main() {
 	cfg = config.Init()
 
 	// Setup graceful shutdown
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	cancel := make(chan struct{})
+	defer close(cancel)
 
 	// Setup signal handling
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("[INFO] Starting Custom Labels Webhook v1.0.0")
+	log.Printf("[INFO] Starting AppID Labeling Webhook v1.0.0")
 	log.Printf("[INFO] Namespace: %s", cfg.NameSpace)
 	log.Printf("[INFO] Service: %s", cfg.ServiceName)
 	log.Printf("[INFO] Organization: %s", cfg.Organization)
