@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -11,6 +12,9 @@ import (
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"mutating-webhook/internal/config"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 func PodsMutation() Hook {
@@ -157,6 +161,12 @@ func isAdminExempt(pod *core.Pod) bool {
 func generateCustomLabels(cfg *config.Config, r *admission.AdmissionRequest, pod *core.Pod) map[string]string {
 	labels := make(map[string]string)
 
+	// Get appid from the namespace
+	appid := getAppIDFromNamespace(r.Namespace)
+	if appid != "" {
+		labels[fmt.Sprintf("%s/appid", cfg.LabelPrefix)] = appid
+	}
+
 	// Add base labels
 	labels[fmt.Sprintf("%s/webhook", cfg.LabelPrefix)] = "custom-labels-mutator"
 	labels[fmt.Sprintf("%s/organization", cfg.LabelPrefix)] = cfg.Organization
@@ -183,6 +193,47 @@ func generateCustomLabels(cfg *config.Config, r *admission.AdmissionRequest, pod
 	}
 
 	return labels
+}
+
+func getAppIDFromNamespace(namespace string) string {
+	// Create in-cluster client
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		log.Printf("[ERROR] Failed to create in-cluster config: %v", err)
+		return ""
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		log.Printf("[ERROR] Failed to create clientset: %v", err)
+		return ""
+	}
+
+	// Get the namespace object
+	ns, err := clientset.CoreV1().Namespaces().Get(context.TODO(), namespace, metav1.GetOptions{})
+	if err != nil {
+		log.Printf("[ERROR] Failed to get namespace %s: %v", namespace, err)
+		return ""
+	}
+
+	// Check for appid in annotations
+	if ns.Annotations != nil {
+		if appid, exists := ns.Annotations["appid"]; exists {
+			log.Printf("[DEBUG] Found appid '%s' in namespace '%s'", appid, namespace)
+			return appid
+		}
+	}
+
+	// Check for appid in labels as fallback
+	if ns.Labels != nil {
+		if appid, exists := ns.Labels["appid"]; exists {
+			log.Printf("[DEBUG] Found appid '%s' in namespace labels '%s'", appid, namespace)
+			return appid
+		}
+	}
+
+	log.Printf("[DEBUG] No appid found in namespace '%s'", namespace)
+	return ""
 }
 
 func createLabelPatches(pod *core.Pod, customLabels map[string]string) []PatchOperation {

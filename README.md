@@ -115,6 +115,7 @@ The webhook automatically applies the following labels to all pods:
 - `{prefix}/created-by`: Username who created the resource
 - `{prefix}/workload-type`: Type of workload (deployment, daemonset, etc.)
 - `{prefix}/workload-name`: Name of the parent workload
+- `{prefix}/appid`: Application ID sourced from namespace annotations or labels
 - Custom labels from configuration
 
 ### Example Applied Labels
@@ -133,6 +134,7 @@ metadata:
     managed-by/created-by: admin
     managed-by/workload-type: deployment
     managed-by/workload-name: my-app
+    managed-by/appid: my-application-123
     company: acme-corp
     cost-center: engineering
     data-classification: internal
@@ -285,6 +287,42 @@ make fmt
 ├── Makefile             # Build automation
 └── README.md            # This file
 ```
+
+## Application ID (appid) Configuration
+
+The webhook automatically extracts the application ID from the namespace where the pod is created. This allows for automatic application identification and labeling.
+
+### Setting appid in Namespace
+
+To set the appid for a namespace, add it as an annotation:
+
+```bash
+# Set appid in namespace annotations
+kubectl annotate namespace my-app-namespace appid=my-application-123
+```
+
+Or as a label (fallback option):
+
+```bash
+# Set appid in namespace labels
+kubectl label namespace my-app-namespace appid=my-application-123
+```
+
+### Example Namespace Configuration
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: my-app-namespace
+  annotations:
+    appid: my-application-123
+  labels:
+    environment: production
+    team: engineering
+```
+
+**Note**: The webhook will first check annotations, then labels as a fallback. If no appid is found, the appid label will not be applied to pods.
 
 ## Customization
 
