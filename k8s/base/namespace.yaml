@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-webhook
+  labels:
+    name: openshift-webhook
+    app: custom-labels-webhook
+    component: mutating-webhook
+    openshift.io/cluster-monitoring: "true"
+    webhook.openshift.io/exempt: "true"
+  annotations:
+    openshift.io/description: "Custom Labels Mutating Webhook for OpenShift"
+    openshift.io/display-name: "Custom Labels Webhook"

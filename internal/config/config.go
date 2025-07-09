@@ -13,15 +13,15 @@ import (
 type Config struct {
 	// time configuration
 	TimeFormat    string         `env:"time_format" default:"2006-01-02 15:04:05"`
-	TimeZoneLocal string         `env:"time_zone" default:"America/Chicago"`
+	TimeZoneLocal string         `env:"time_zone" default:"UTC"`
 	TZoneLocal    *time.Location `ignored:"true"`
 	TZoneUTC      *time.Location `ignored:"true"`
 
 	// config file
-	ConfigFile string `env:"config_file" default:"./config.yaml"`
+	ConfigFile string `env:"config_file" default:"/etc/webhook/config.yaml"`
 
 	// logging
-	LogLevel int                   `env:"log_level" default:"50"`
+	LogLevel int                   `env:"log_level" default:"60"`
 	Log      *logutils.LevelFilter `ignored:"true"`
 
 	// webserver
@@ -29,15 +29,24 @@ type Config struct {
 	WebServerIP           string `env:"webserver_ip" default:"0.0.0.0"`
 	WebServerCertificate  string `env:"webserver_cert"`
 	WebServerKey          string `env:"webserver_key"`
-	WebServerReadTimeout  int    `env:"webserver_read_timeout" default:"5"`
-	WebServerWriteTimeout int    `env:"webserver_write_timeout" default:"1"`
-	WebServerIdleTimeout  int    `env:"webserver_idle_timeout" default:"2"`
+	WebServerReadTimeout  int    `env:"webserver_read_timeout" default:"30"`
+	WebServerWriteTimeout int    `env:"webserver_write_timeout" default:"30"`
+	WebServerIdleTimeout  int    `env:"webserver_idle_timeout" default:"120"`
 
-	// mutation configuration
-	AllowAdminNoMutate       bool     `env:"allow_admin_nomutate" default:"false"`
-	AllowAdminNoMutateToggle string   `env:"allow_admin_nomutate_toggle" default:"7b068a99-c02b-410a-bd59-3514bac85e7a"`
-	DockerhubRegistry        string   `env:"dockerhub_registry" default:"registry.hub.docker.com"`
-	MutateIgnoredImages      []string `ignored:"true"`
+	// admission control configuration
+	DryRun               bool     `env:"dry_run" default:"false"`
+	EnableMetrics        bool     `env:"enable_metrics" default:"true"`
+	MetricsPort          int      `env:"metrics_port" default:"9090"`
+	AllowAdminNoMutate   bool     `env:"allow_admin_nomutate" default:"false"`
+	ExcludedNamespaces   []string `ignored:"true"`
+
+	// custom labeling configuration
+	CustomLabels         map[string]string `ignored:"true"`
+	LabelPrefix          string            `env:"label_prefix" default:"managed-by"`
+	Organization         string            `env:"organization" default:"default"`
+	Environment          string            `env:"environment" default:"production"`
+	EnableLabeling       bool              `env:"enable_labeling" default:"true"`
+	LabelAllWorkloads    bool              `env:"label_all_workloads" default:"true"`
 
 	// certificate configuration
 	CACert         string `env:"ca_cert"`
@@ -46,8 +55,10 @@ type Config struct {
 	CertPrivateKey string `env:"cert_private_key"`
 
 	// kubernetes configuration
-	NameSpace string `env:"namespace" default:"ingress-nginx"`
-	ServiceName string `env:"service_name" default:"webhook"`
+	NameSpace       string `env:"namespace" default:"openshift-webhook"`
+	ServiceName     string `env:"service_name" default:"custom-labels-webhook"`
+	ClusterName     string `env:"cluster_name" default:"openshift-cluster"`
+	WebhookName     string `env:"webhook_name" default:"custom-labels-mutator"`
 }
 
 // DefaultConfig initializes the config variable for use with a prepared set of defaults.

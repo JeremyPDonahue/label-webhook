@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-labels-webhook
+  namespace: openshift-webhook
+  labels:
+    app: custom-labels-webhook
+    component: mutating-webhook
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: custom-labels-webhook
+  template:
+    metadata:
+      labels:
+        app: custom-labels-webhook
+        component: mutating-webhook
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: custom-labels-webhook
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+      - name: config
+        configMap:
+          name: webhook-config
+          defaultMode: 420
+          optional: true
+      - name: certs
+        secret:
+          secretName: webhook-certs
+          defaultMode: 420
+      containers:
+      - name: webhook
+        image: quay.io/openshift/custom-labels-webhook:v1.0.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 10001
+          runAsGroup: 10001
+          capabilities:
+            drop:
+            - ALL
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SERVICE_NAME
+          value: custom-labels-webhook
+        - name: WEBHOOK_NAME
+          value: custom-labels-mutator
+        - name: LOG_LEVEL
+          value: "60"
+        - name: ENABLE_METRICS
+          value: "true"
+        - name: METRICS_PORT
+          value: "9090"
+        - name: WEBSERVER_PORT
+          value: "8443"
+        - name: CONFIG_FILE
+          value: /etc/webhook/config.yaml
+        - name: LABEL_PREFIX
+          value: "managed-by"
+        - name: ORGANIZATION
+          valueFrom:
+            configMapKeyRef:
+              name: webhook-config
+              key: organization
+              optional: true
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: webhook-config
+              key: environment
+              optional: true
+        - name: CLUSTER_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: webhook-config
+              key: cluster-name
+              optional: true
+        ports:
+        - name: webhook
+          containerPort: 8443
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/webhook
+          readOnly: true
+        - name: certs
+          mountPath: /etc/ssl/certs/webhook
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8443
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      terminationGracePeriodSeconds: 30
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: custom-labels-webhook
+              topologyKey: kubernetes.io/hostname
+

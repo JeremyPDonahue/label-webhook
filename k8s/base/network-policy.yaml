@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: custom-labels-webhook
+  namespace: openshift-webhook
+  labels:
+    app: custom-labels-webhook
+    component: mutating-webhook
+spec:
+  podSelector:
+    matchLabels:
+      app: custom-labels-webhook
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-kube-apiserver
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-apiserver
+    ports:
+    - protocol: TCP
+      port: 8443
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: openshift-monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+  egress:
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 6443
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53

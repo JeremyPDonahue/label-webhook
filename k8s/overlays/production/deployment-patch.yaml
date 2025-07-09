@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-labels-webhook
+  namespace: webhook-system
+  annotations:
+    description: "Production deployment with high availability and monitoring"
+spec:
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: webhook
+        env:
+        - name: DRY_RUN
+          value: "false"
+        - name: LOG_LEVEL
+          value: "40"  # Warning and error logging only
+        - name: ENABLE_METRICS
+          value: "true"
+        - name: LABEL_PREFIX
+          value: "managed-by"
+        livenessProbe:
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - custom-labels-webhook
+            topologyKey: kubernetes.io/hostname

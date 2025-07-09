@@ -1,0 +1,32 @@
+# Custom Labels Webhook Configuration - Sandbox Environment
+
+# Admission control settings
+allow-admin-nomutate: true
+dry-run: true
+enable-labeling: true
+label-all-workloads: false
+
+# Excluded namespaces (in addition to system namespaces)
+excluded-namespaces:
+  - "kube-system"
+  - "kube-public"
+  - "kube-node-lease"
+  - "default"
+  - "monitoring"
+  - "logging"
+
+# Custom labels to apply to all workloads
+custom-labels:
+  company: "your-company"
+  environment: "sandbox"
+  cost-center: "development"
+  data-classification: "test"
+  compliance: "optional"
+  backup: "disabled"
+  monitoring: "basic"
+  testing: "enabled"
+
+# Kubernetes configuration
+kubernetes:
+  namespace: "webhook-sandbox"
+  service-name: "sandbox-custom-labels-webhook"

@@ -1,30 +1,59 @@
-# Step 1 - Certificate Container
-####
-FROM registry.c.test-chamber-13.lan/library/alpine:latest AS certHost
-RUN addgroup -S -g 1000 app && \
-    adduser --disabled-password -G app --gecos "application account" --home "/home/app" --shell "/sbin/nologin" --no-create-home --uid 1000 app
+# Multi-stage build for production OpenShift deployment
 
-# Step 2 - Build Container
-####
-FROM registry.c.test-chamber-13.lan/dockerhub/library/golang:alpine AS builder
+# Build stage
+FROM golang:1.21-alpine AS builder
 
-COPY . /go/src/app
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
 
-WORKDIR /go/src/app
+# Create app user for security
+RUN addgroup -g 10001 -S webhook && \
+    adduser -u 10001 -S webhook -G webhook
 
-RUN apk add --no-cache git && \
-    git config --global --add safe.directory /go/src/app && \
-    GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -v -ldflags="-s -w" -tags timetzdata -o webhook ./cmd/webhook
+# Set working directory
+WORKDIR /build
 
-# Step 3 - Running Container
-####
+# Copy go mod files first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the binary with security and optimization flags
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags='-w -s -extldflags "-static"' \
+    -a -installsuffix cgo \
+    -tags "timetzdata netgo" \
+    -o webhook ./cmd/webhook
+
+# Final stage - minimal runtime image
 FROM scratch
 
-COPY --from=certHost /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=certHost /etc/passwd /etc/group /etc/
-COPY --from=builder --chown=app:app /go/src/app/webhook /app/webhook
+# Import from builder
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/group /etc/group
 
-USER app:app
-WORKDIR /app/
+# Copy the binary
+COPY --from=builder /build/webhook /webhook
 
-ENTRYPOINT ["/app/webhook"]
+# Create directories that may be needed
+COPY --from=builder --chown=10001:10001 /tmp /tmp
+
+# Use non-root user (OpenShift compatible)
+USER 10001:10001
+
+# Set working directory
+WORKDIR /
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD ["/webhook", "-help"]
+
+# Expose ports
+EXPOSE 8443 9090
+
+# Run the webhook
+ENTRYPOINT ["/webhook"]

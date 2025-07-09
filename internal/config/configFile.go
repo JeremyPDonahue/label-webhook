@@ -13,6 +13,8 @@ type configFileStruct struct {
 	AllowAdminNoMutateToggle string           `yaml:"allow-admin-nomutate-toggle"`
 	DockerhubRegistry        string           `yaml:"dockerhub-registry"`
 	MutateIgnoredImages      []string         `yaml:"mutate-ignored-images"`
+	ExcludedNamespaces       []string         `yaml:"excluded-namespaces"`
+	CustomLabels             map[string]string `yaml:"custom-labels"`
 	CertificateAuthority     CertStruct       `yaml:"certificate-authority"`
 	Certificate              CertStruct       `yaml:"certificate"`
 	Kubernetes               KubernetesStruct `yaml:"kubernetes"`

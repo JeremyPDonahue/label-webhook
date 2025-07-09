@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: webhook-config
+  namespace: openshift-webhook
+  labels:
+    app: custom-labels-webhook
+    component: mutating-webhook
+data:
+  organization: "acme-corp"
+  environment: "production"
+  cluster-name: "openshift-prod-cluster"
+  config.yaml: |
+    # Custom Labels Webhook Configuration
+    
+    # Admission control settings
+    allow-admin-nomutate: false
+    dry-run: false
+    enable-labeling: true
+    label-all-workloads: true
+    
+    # Excluded namespaces (in addition to system namespaces)
+    excluded-namespaces:
+      - "kube-system"
+      - "kube-public"
+      - "kube-node-lease"
+      - "default"
+    
+    # Custom labels to apply to all workloads
+    custom-labels:
+      company: "acme-corp"
+      cost-center: "engineering"
+      data-classification: "internal"
+      compliance: "required"
+      backup: "enabled"
+      monitoring: "enabled"
+    
+    # Kubernetes configuration
+    kubernetes:
+      namespace: "openshift-webhook"
+      service-name: "custom-labels-webhook"

@@ -1,9 +1,7 @@
----
-# Custom Labels Webhook Configuration
+# Custom Labels Webhook Configuration - Production Environment
 
 # Admission control settings
 allow-admin-nomutate: false
-allow-admin-nomutate-toggle: 7b068a99-c02b-410a-bd59-3514bac85e7a
 dry-run: false
 enable-labeling: true
 label-all-workloads: true
@@ -13,18 +11,20 @@ excluded-namespaces:
   - "kube-system"
   - "kube-public"
   - "kube-node-lease"
-  - "default"
 
 # Custom labels to apply to all workloads
 custom-labels:
-  company: "acme-corp"
+  company: "your-company"
+  environment: "production"
   cost-center: "engineering"
   data-classification: "internal"
   compliance: "required"
   backup: "enabled"
-  monitoring: "enabled"
+  monitoring: "full"
+  security-scan: "required"
+  data-retention: "7years"
 
 # Kubernetes configuration
 kubernetes:
-  namespace: "openshift-webhook"
-  service-name: "custom-labels-webhook"
+  namespace: "webhook-system"
+  service-name: "prod-custom-labels-webhook"

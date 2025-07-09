@@ -1,0 +1,77 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: custom-labels-mutator
+  labels:
+    app: custom-labels-webhook
+    component: mutating-webhook
+webhooks:
+- name: custom-labels.openshift-webhook.svc.cluster.local
+  clientConfig:
+    service:
+      name: custom-labels-webhook
+      namespace: openshift-webhook
+      path: "/api/v1/mutate/pod"
+      port: 443
+    caBundle: # Will be injected by cert-manager or OpenShift
+  rules:
+  - operations:
+    - "CREATE"
+    apiVersions:
+    - "v1"
+    apiGroups:
+    - ""
+    resources: 
+    - "pods"
+    scope: "Namespaced"
+  namespaceSelector:
+    matchExpressions:
+    - key: name
+      operator: NotIn
+      values:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+      - openshift-system
+      - openshift-kube-apiserver
+      - openshift-kube-scheduler
+      - openshift-kube-controller-manager
+      - openshift-etcd
+      - openshift-apiserver
+      - openshift-controller-manager
+      - openshift-authentication
+      - openshift-oauth-apiserver
+      - openshift-service-ca
+      - openshift-network-operator
+      - openshift-cluster-machine-approver
+      - openshift-cluster-samples-operator
+      - openshift-cluster-storage-operator
+      - openshift-cluster-version
+      - openshift-config
+      - openshift-config-managed
+      - openshift-console
+      - openshift-console-operator
+      - openshift-dns
+      - openshift-dns-operator
+      - openshift-image-registry
+      - openshift-ingress
+      - openshift-ingress-operator
+      - openshift-machine-api
+      - openshift-machine-config-operator
+      - openshift-monitoring
+      - openshift-multus
+      - openshift-node
+      - openshift-operator-lifecycle-manager
+      - openshift-operators
+      - openshift-ovn-kubernetes
+      - openshift-sdn
+      - openshift-user-workload-monitoring
+      - openshift-webhook
+  sideEffects: None
+  admissionReviewVersions:
+  - "v1"
+  - "v1beta1"
+  failurePolicy: Ignore
+  timeoutSeconds: 10
+

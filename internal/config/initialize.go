@@ -104,14 +104,20 @@ func updateValues(cfg *Config, configFileData configFileStruct) {
 	if cfg.DockerhubRegistry == "registry.hub.docker.com" && configFileData.DockerhubRegistry != "registry.hub.docker.com" {
 		cfg.DockerhubRegistry = configFileData.DockerhubRegistry
 	}
-	if cfg.NameSpace == "ingress-nginx" && configFileData.Kubernetes.Namespace != "ingress-nginx" {
+	if cfg.NameSpace == "openshift-webhook" && configFileData.Kubernetes.Namespace != "openshift-webhook" {
 		cfg.NameSpace = configFileData.Kubernetes.Namespace
 	}
-	if cfg.ServiceName == "webhook" && configFileData.Kubernetes.ServiceName != "webhook" {
+	if cfg.ServiceName == "custom-labels-webhook" && configFileData.Kubernetes.ServiceName != "custom-labels-webhook" {
 		cfg.ServiceName = configFileData.Kubernetes.ServiceName
 	}
 	if len(configFileData.MutateIgnoredImages) != 0 {
 		cfg.MutateIgnoredImages = configFileData.MutateIgnoredImages
+	}
+	if len(configFileData.ExcludedNamespaces) != 0 {
+		cfg.ExcludedNamespaces = configFileData.ExcludedNamespaces
+	}
+	if len(configFileData.CustomLabels) != 0 {
+		cfg.CustomLabels = configFileData.CustomLabels
 	}
 	if len(configFileData.CertificateAuthority.Certificate) != 0 {
 		cfg.CACert = configFileData.CertificateAuthority.Certificate

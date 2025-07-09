@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: custom-labels-webhook-base
+
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - configmap.yaml
+  - service.yaml
+  - deployment.yaml
+  - network-policy.yaml
+  - service-monitor.yaml
+
+commonLabels:
+  app: custom-labels-webhook
+  component: mutating-webhook
+
+images:
+  - name: webhook-image
+    newName: quay.io/openshift/custom-labels-webhook
+    newTag: v1.0.0
+
+replicas:
+  - name: custom-labels-webhook
+    count: 2
+
+configMapGenerator:
+  - name: webhook-config
+    literals:
+      - organization=default-org
+      - environment=development
+      - cluster-name=default-cluster
+    files:
+      - config.yaml
+
+secretGenerator:
+  - name: webhook-certs
+    type: kubernetes.io/tls
+    options:
+      disableNameSuffixHash: true

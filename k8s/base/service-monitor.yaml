@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: custom-labels-webhook
+  namespace: openshift-webhook
+  labels:
+    app: custom-labels-webhook
+    component: mutating-webhook
+spec:
+  selector:
+    matchLabels:
+      app: custom-labels-webhook
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    scheme: http
+    tlsConfig:
+      insecureSkipVerify: true
+  namespaceSelector:
+    matchNames:
+    - openshift-webhook

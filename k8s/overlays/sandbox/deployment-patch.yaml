@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-labels-webhook
+  namespace: webhook-sandbox
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    description: "Sandbox deployment with reduced resources and dry-run mode"
+spec:
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "false"  # Disable metrics in sandbox
+    spec:
+      containers:
+      - name: webhook
+        env:
+        - name: DRY_RUN
+          value: "true"
+        - name: LOG_LEVEL
+          value: "80"  # Debug logging
+        - name: ENABLE_METRICS
+          value: "false"  # Disable metrics in sandbox
+        - name: LABEL_PREFIX
+          value: "sandbox"
+        livenessProbe:
+          initialDelaySeconds: 15  # Faster startup check
+          periodSeconds: 15
+        readinessProbe:
+          initialDelaySeconds: 5  # Faster readiness check
+          periodSeconds: 5
